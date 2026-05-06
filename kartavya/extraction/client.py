@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TypeVar
@@ -38,12 +39,15 @@ class OllamaClient:
 
     def __init__(
         self,
-        model: str = DEFAULT_MODEL,
+        model: str | None = None,
         host: str | None = None,
         num_ctx: int = DEFAULT_NUM_CTX,
         num_predict: int = DEFAULT_NUM_PREDICT,
     ) -> None:
-        self.model = model
+        # Explicit arg > OLLAMA_MODEL env override > locked default. The env
+        # override is for benchmarking only; production paths leave it unset
+        # and get the §8 locked model.
+        self.model = model or os.environ.get("OLLAMA_MODEL") or DEFAULT_MODEL
         self.num_ctx = num_ctx
         self.num_predict = num_predict
         self._client = ollama.Client(host=host) if host else ollama.Client()

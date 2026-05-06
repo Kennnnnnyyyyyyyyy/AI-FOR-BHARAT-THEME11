@@ -64,7 +64,11 @@ def test_apvc_pipeline_meets_accuracy_gate(
 
     result = pipeline.extract(case_id, paragraphs, client)
 
-    # 1. Paragraph classification accuracy
+    # 1. Paragraph classification accuracy + diagnostic dump
+    confidence_by_index = {
+        p.paragraph_index: c.confidence
+        for p, c in zip(paragraphs, result.paragraph_classifications, strict=True)
+    }
     label_by_index = {
         p.paragraph_index: c.label.value
         for p, c in zip(paragraphs, result.paragraph_classifications, strict=True)
@@ -78,7 +82,45 @@ def test_apvc_pipeline_meets_accuracy_gate(
         if label_by_index.get(idx) == expected_label
     )
     accuracy = matches / len(expected_labels)
+
+    breakdown = [
+        {
+            "paragraph_index": idx,
+            "expected": expected_labels[idx],
+            "actual": label_by_index.get(idx),
+            "confidence": confidence_by_index.get(idx),
+            "match": label_by_index.get(idx) == expected_labels[idx],
+        }
+        for idx in sorted(expected_labels)
+    ]
+    debug_path = Path(__file__).resolve().parent.parent.parent / "_debug_extraction.json"
+    debug_path.write_text(
+        json.dumps(
+            {
+                "model": client.model,
+                "accuracy": accuracy,
+                "matches": matches,
+                "total": len(expected_labels),
+                "verdict_actual": result.verdict.verdict.value,
+                "verdict_expected": expected["verdict"],
+                "operative_direction_count": len(result.operative_directions),
+                "paragraph_breakdown": breakdown,
+            },
+            indent=2,
+        )
+    )
+
     print(f"\nparagraph accuracy: {matches}/{len(expected_labels)} = {accuracy:.2%}")
+    print(f"diagnostic written to {debug_path}")
+    misses = [b for b in breakdown if not b["match"]]
+    if misses:
+        print("misclassified paragraphs:")
+        for m in misses:
+            print(
+                f"  P{m['paragraph_index']:03d}: "
+                f"expected={m['expected']:<10s} actual={m['actual']:<10s} "
+                f"conf={m['confidence']:.2f}"
+            )
 
     # 2. Verdict exact match
     assert result.verdict.verdict.value == expected["verdict"], (

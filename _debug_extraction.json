@@ -1,0 +1,179 @@
+{
+  "model": "llama3.1:8b-instruct-q4_K_M",
+  "accuracy": 0.8333333333333334,
+  "matches": 20,
+  "total": 24,
+  "verdict_actual": "dismissed",
+  "verdict_expected": "dismissed",
+  "operative_direction_count": 0,
+  "paragraph_breakdown": [
+    {
+      "paragraph_index": 0,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.95,
+      "match": true
+    },
+    {
+      "paragraph_index": 1,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.98,
+      "match": true
+    },
+    {
+      "paragraph_index": 2,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.99,
+      "match": true
+    },
+    {
+      "paragraph_index": 3,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.97,
+      "match": true
+    },
+    {
+      "paragraph_index": 4,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.96,
+      "match": true
+    },
+    {
+      "paragraph_index": 5,
+      "expected": "contextual",
+      "actual": "operative",
+      "confidence": 0.92,
+      "match": false
+    },
+    {
+      "paragraph_index": 6,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.98,
+      "match": true
+    },
+    {
+      "paragraph_index": 7,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.99,
+      "match": true
+    },
+    {
+      "paragraph_index": 8,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.97,
+      "match": true
+    },
+    {
+      "paragraph_index": 9,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.96,
+      "match": true
+    },
+    {
+      "paragraph_index": 10,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.95,
+      "match": true
+    },
+    {
+      "paragraph_index": 11,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.92,
+      "match": true
+    },
+    {
+      "paragraph_index": 12,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.93,
+      "match": true
+    },
+    {
+      "paragraph_index": 13,
+      "expected": "contextual",
+      "actual": "operative",
+      "confidence": 0.98,
+      "match": false
+    },
+    {
+      "paragraph_index": 14,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.96,
+      "match": true
+    },
+    {
+      "paragraph_index": 15,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.95,
+      "match": true
+    },
+    {
+      "paragraph_index": 16,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.98,
+      "match": true
+    },
+    {
+      "paragraph_index": 17,
+      "expected": "contextual",
+      "actual": "contextual",
+      "confidence": 0.99,
+      "match": true
+    },
+    {
+      "paragraph_index": 18,
+      "expected": "contextual",
+      "actual": "operative",
+      "confidence": 0.92,
+      "match": false
+    },
+    {
+      "paragraph_index": 19,
+      "expected": "contextual",
+      "actual": "operative",
+      "confidence": 0.95,
+      "match": false
+    },
+    {
+      "paragraph_index": 20,
+      "expected": "operative",
+      "actual": "operative",
+      "confidence": 0.95,
+      "match": true
+    },
+    {
+      "paragraph_index": 21,
+      "expected": "operative",
+      "actual": "operative",
+      "confidence": 0.98,
+      "match": true
+    },
+    {
+      "paragraph_index": 22,
+      "expected": "operative",
+      "actual": "operative",
+      "confidence": 0.99,
+      "match": true
+    },
+    {
+      "paragraph_index": 23,
+      "expected": "operative",
+      "actual": "operative",
+      "confidence": 0.99,
+      "match": true
+    }
+  ]
+}

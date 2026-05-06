@@ -44,7 +44,7 @@ def test_happy_path_accepts_valid_classification() -> None:
     anchor_map = build_anchor_map([p])
     raw = ParagraphClassificationRaw(
         anchor=anchor_token(p),
-        label=ParagraphLabel.FACTS,
+        label=ParagraphLabel.CONTEXTUAL,
         confidence=0.9,
         source_span="petitioner approached this Court",
     )
@@ -56,7 +56,7 @@ def test_happy_path_accepts_valid_classification() -> None:
     assert len(accepted) == 1
     assert not failures
     assert accepted[0].paragraph_id == p.id
-    assert accepted[0].label == ParagraphLabel.FACTS
+    assert accepted[0].label == ParagraphLabel.CONTEXTUAL
     assert accepted[0].provenance.prompt_sha == "a" * 64
 
 
@@ -65,7 +65,7 @@ def test_unknown_anchor_fails_validation() -> None:
     anchor_map = build_anchor_map([p])
     raw = ParagraphClassificationRaw(
         anchor="P999-deadbeef",
-        label=ParagraphLabel.FACTS,
+        label=ParagraphLabel.CONTEXTUAL,
         confidence=0.9,
         source_span="anything",
     )
@@ -84,7 +84,7 @@ def test_overlap_paragraph_silently_discarded() -> None:
     anchor_map = build_anchor_map([centre_p, overlap_p])
     raw_overlap = ParagraphClassificationRaw(
         anchor=anchor_token(overlap_p),
-        label=ParagraphLabel.FACTS,
+        label=ParagraphLabel.CONTEXTUAL,
         confidence=0.9,
         source_span="overlap paragraph",
     )
@@ -104,7 +104,7 @@ def test_span_mismatch_caught() -> None:
     # Model returns p1's anchor but copies span from p2
     raw = ParagraphClassificationRaw(
         anchor=anchor_token(p1),
-        label=ParagraphLabel.FACTS,
+        label=ParagraphLabel.CONTEXTUAL,
         confidence=0.9,
         source_span="statutory scheme",
     )
@@ -124,7 +124,7 @@ def test_span_substring_check_tolerant_to_whitespace() -> None:
     anchor_map = build_anchor_map([p])
     raw = ParagraphClassificationRaw(
         anchor=anchor_token(p),
-        label=ParagraphLabel.FACTS,
+        label=ParagraphLabel.CONTEXTUAL,
         confidence=0.9,
         source_span="petitioner filed a writ",
     )
@@ -137,18 +137,18 @@ def test_force_low_confidence_returns_zero_confidence() -> None:
     p = _make_paragraph(0, "Some text.")
     raw = ParagraphClassificationRaw(
         anchor=anchor_token(p),
-        label=ParagraphLabel.REASONING,
+        label=ParagraphLabel.OPERATIVE,
         confidence=0.4,
         source_span="some text",
     )
     forced = force_low_confidence(p, raw, _make_metadata())
     assert forced.confidence == 0.0
-    assert forced.label == ParagraphLabel.REASONING  # preserved for reviewer
+    assert forced.label == ParagraphLabel.OPERATIVE  # preserved for reviewer
     assert forced.provenance.confidence == 0.0
 
 
-def test_force_low_confidence_without_raw_defaults_to_facts() -> None:
+def test_force_low_confidence_without_raw_defaults_to_contextual() -> None:
     p = _make_paragraph(0, "Some text.")
     forced = force_low_confidence(p, None, _make_metadata())
-    assert forced.label == ParagraphLabel.FACTS
+    assert forced.label == ParagraphLabel.CONTEXTUAL
     assert forced.confidence == 0.0

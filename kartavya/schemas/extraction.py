@@ -10,12 +10,21 @@ from kartavya.schemas.provenance import ExtractionProvenance
 
 
 class ParagraphLabel(str, Enum):
-    FACTS = "facts"
-    ARGUMENTS = "arguments"
-    REASONING = "reasoning"
-    PRECEDENT = "precedent"
+    """Operational taxonomy (§10.1). Three labels indexed on what the officer
+    must do, not on the rhetorical content of the paragraph.
+
+    - OPERATIVE: contains a court direction the government must act on, or
+      the verdict statement that triggers limitation calculation. Sole input
+      to the rules engine.
+    - CONTEXTUAL: supports understanding of the case but generates no officer
+      action. Subsumes the prior facts/arguments/precedent/reasoning labels.
+    - PROCEDURAL: case metadata, cause-title, party listings, signature
+      blocks, page headers, footnote-only paragraphs. Skipped in review.
+    """
+
     OPERATIVE = "operative"
-    DECREE = "decree"
+    CONTEXTUAL = "contextual"
+    PROCEDURAL = "procedural"
 
 
 class Verdict(str, Enum):

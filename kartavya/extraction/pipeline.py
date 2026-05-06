@@ -53,7 +53,7 @@ _log = structlog.get_logger(__name__)
 
 PROMPT_DIR = Path(__file__).parent / "prompts"
 
-OPERATIVE_LABELS = frozenset({ParagraphLabel.OPERATIVE, ParagraphLabel.DECREE})
+OPERATIVE_LABELS = frozenset({ParagraphLabel.OPERATIVE})
 
 SYSTEM_ACTOR = ActorRef(
     kind=ActorKind.SYSTEM,
@@ -136,7 +136,7 @@ def classify_paragraphs(
 
     anchor_map = build_anchor_map(paragraphs)
     paragraphs_by_id = {p.id: p for p in paragraphs}
-    _, prompt_body = _load_prompt("paragraph_classifier.v1.md")
+    _, prompt_body = _load_prompt("paragraph_classifier.v2.md")
 
     accepted_by_id: dict[UUID, ParagraphClassification] = {}
     failures_for_retry: list[ValidationFailure] = []

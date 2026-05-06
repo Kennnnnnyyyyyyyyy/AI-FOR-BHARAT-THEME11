@@ -131,13 +131,14 @@ def force_low_confidence(
     """Build a `ParagraphClassification` with confidence forced to 0.0 (LOW tier).
 
     Used when a paragraph fails validation twice. The label falls back to
-    `facts` (the §10.1 default narrative category) if the model never returned
-    a usable raw entry; otherwise we keep the model's label so the reviewer
-    sees what the model thought, and the LOW tier blocks plan approval per §10.5.
+    `contextual` (the §10.1 default non-actionable category) if the model
+    never returned a usable raw entry; otherwise we keep the model's label
+    so the reviewer sees what the model thought, and the LOW tier blocks
+    plan approval per §10.5.
     """
     from kartavya.schemas.extraction import ParagraphLabel
 
-    label = raw.label if raw is not None else ParagraphLabel.FACTS
+    label = raw.label if raw is not None else ParagraphLabel.CONTEXTUAL
     return ParagraphClassification(
         paragraph_id=paragraph.id,
         label=label,

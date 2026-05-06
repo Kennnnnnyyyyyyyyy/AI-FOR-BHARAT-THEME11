@@ -302,6 +302,8 @@ Locked LLM: `llama3.1:8b-instruct-q4_K_M` via local Ollama. Do not switch models
 
 *Extraction outputs:*
 - `ParagraphClassification` — paragraph_id, label, confidence, provenance
+- `ParagraphLabel` — enum (`OPERATIVE`, `CONTEXTUAL`, `PROCEDURAL`); operational taxonomy per §10.1. Three labels, indexed on what the officer must do — not on the rhetorical content of the paragraph. Only `OPERATIVE` paragraphs feed the rules engine.
+- `Verdict` — enum (`ALLOWED`, `DISMISSED`, `PARTLY_ALLOWED`, `DISPOSED_WITH_DIRECTIONS`, `REMANDED`)
 - `VerdictClassification` — case_id, verdict, confidence, provenance
 - `OperativeDirection` — id, paragraph_id, text, source_span, confidence, provenance
 - `ExtractionResult` — case_id, classifications, verdict, directions, metadata
@@ -337,7 +339,7 @@ If you find yourself defining a data shape inline that is not on this list and c
 Three Ollama calls per case, never combined:
 1. Paragraph classifier (returns `ParagraphClassification[]`)
 2. Verdict classifier (returns `VerdictClassification`)
-3. Operative direction extractor (returns `OperativeDirection[]`, run only on `operative` and `decree` paragraphs)
+3. Operative direction extractor (returns `OperativeDirection[]`, run only on paragraphs labelled `operative` by the classifier)
 
 Each prompt file format:
 ```
@@ -505,9 +507,14 @@ When asked, push back and ask whether it's prototype-critical. Default answer: d
 
 Material changes (Tier-1 invariants, module boundaries, dependency list) require a version bump and a `CHANGELOG.md` entry. Phase changes (§1) are not version bumps.
 
-**Version:** 2.1.0
-**Last updated:** 2026-05-04
+**Version:** 2.2.0
+**Last updated:** 2026-05-06
 **Phase set:** PROTOTYPE through 2026-05-07
+
+**Changelog (2.1.0 → 2.2.0):**
+- §9 (catalogue): replaced the implicit 6-value `ParagraphLabel` (facts/arguments/reasoning/precedent/operative/decree) with the explicit 3-value operational taxonomy (`OPERATIVE`/`CONTEXTUAL`/`PROCEDURAL`); added `Verdict` enum entry that was previously implicit.
+- §10.1: operative direction extractor now runs on paragraphs labelled `operative` only — `decree` no longer exists as a separate label (verdict-statement paragraphs collapse into `operative` because they trigger limitation calculation).
+- Why: 6-label scheme produced 70.83% paragraph accuracy on Venkateshulu, with the failure mode being pure semantic confusion (one paragraph routinely contains facts + arguments + reasoning). Indexing on operational role rather than rhetorical content collapses the ambiguity. Prompt re-authored as `paragraph_classifier.v2.md`; v1 retained per §3.5.
 
 **Changelog (2.0.0 → 2.1.0):**
 - §0: added style-discipline note ("invariants stated, not implied")

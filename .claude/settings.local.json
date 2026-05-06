@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(.venv/bin/python -m pytest tests/unit -q)",
+      "Bash(.venv/bin/mypy kartavya/extraction kartavya/schemas kartavya/audit kartavya/errors.py)"
     ]
   }
 }

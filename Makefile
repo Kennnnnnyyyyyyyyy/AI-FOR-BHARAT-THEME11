@@ -1,0 +1,52 @@
+.PHONY: help bootstrap dev test lint format clean docker-up docker-down
+
+help:
+	@echo "Kartavya Development Commands"
+	@echo "=============================="
+	@echo "  make bootstrap    Install deps & init environment"
+	@echo "  make dev          Run FastAPI dev server"
+	@echo "  make test         Run tests"
+	@echo "  make lint         Lint code"
+	@echo "  make format       Format code"
+	@echo "  make docker-up    Start services"
+	@echo "  make docker-down  Stop services"
+	@echo "  make clean        Clean cache"
+
+bootstrap:
+	python3 -m venv .venv
+	. .venv/bin/activate && pip install -q --upgrade pip setuptools wheel
+	. .venv/bin/activate && pip install -q -r requirements.txt
+	. .venv/bin/activate && pip install -q -r requirements-dev.txt
+	cp .env.template .env
+	docker-compose up -d
+	@echo "✅ Bootstrap complete! Edit .env and run: make dev"
+
+dev:
+	. .venv/bin/activate && uvicorn kartavya.main:app --reload --host 0.0.0.0 --port 8000
+
+test:
+	. .venv/bin/activate && pytest -v
+
+lint:
+	. .venv/bin/activate && ruff check . && mypy kartavya/
+
+format:
+	. .venv/bin/activate && black kartavya/ && ruff check --fix .
+
+docker-up:
+	docker-compose up -d
+	docker-compose ps
+
+docker-down:
+	docker-compose down
+
+docker-ps:
+	docker-compose ps
+
+clean:
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete
+	rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov/
+	@echo "✅ Cleaned"
+
+.SILENT: help

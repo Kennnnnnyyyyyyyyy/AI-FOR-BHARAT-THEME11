@@ -1,0 +1,51 @@
+
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kartavya_postgres
+    environment:
+      POSTGRES_USER: kartavya_user
+      POSTGRES_PASSWORD: kartavya_pass_dev
+      POSTGRES_DB: kartavya_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kartavya_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: kartavya_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: kartavya_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@kartavya.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -28,7 +28,6 @@ from kartavya.extraction.anchors import (
 )
 from kartavya.extraction.client import CallMetadata, OllamaClient
 from kartavya.extraction.validator import (
-    FailureReason,
     ValidationFailure,
     force_low_confidence,
     validate_chunk,

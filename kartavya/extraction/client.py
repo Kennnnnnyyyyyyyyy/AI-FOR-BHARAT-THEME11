@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TypeVar
 
-import ollama
+import ollama  # type: ignore[import-untyped]
 import structlog
 from pydantic import BaseModel, ValidationError
 
@@ -78,7 +78,12 @@ class OllamaClient:
                         "num_predict": self.num_predict,
                     },
                 )
-                last_raw = response["response"]
+                raw_response = response["response"]
+                if not isinstance(raw_response, str):
+                    raise ExtractionFailed(
+                        f"Ollama returned non-string response: {type(raw_response).__name__}"
+                    )
+                last_raw = raw_response
                 parsed = schema.model_validate_json(last_raw)
                 return parsed, CallMetadata(
                     prompt_sha=prompt_sha,

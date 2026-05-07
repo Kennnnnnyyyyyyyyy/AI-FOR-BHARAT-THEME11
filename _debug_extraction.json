@@ -180,5 +180,63 @@
       "confidence": 1.0,
       "match": true
     }
+  ],
+  "rule_engine_version": "0.1.0",
+  "action_plan": [
+    {
+      "rule_id": "dismissed_slp_window",
+      "rule_version": "0.1.0",
+      "target_role": "Chief Executive Officer, Karnataka Industrial Areas Development Board",
+      "deadline": "2026-07-16T00:00:00+00:00",
+      "severity": "defensive",
+      "statute": "Article 136, Constitution of India; Limitation Act, 1963 \u2014 Article 133",
+      "computation": "judgment_date(2026-04-17) + 90 days = 2026-07-16",
+      "description": "Monitor SLP (Special Leave Petition) window in the Supreme Court.\nPetitioner has 90 days from the judgment date to file an SLP under\nArticle 136. Respondent should be prepared to defend if filed.",
+      "triggered_by": {
+        "verdict": "dismissed"
+      }
+    },
+    {
+      "rule_id": "directive_relative_deadline:within_n_days",
+      "rule_version": "0.1.0",
+      "target_role": "Chief Executive Officer, Karnataka Industrial Areas Development Board",
+      "deadline": "2026-06-16T00:00:00+00:00",
+      "severity": "active",
+      "statute": "Operative direction in paragraph 20 (Article 226, Constitution of India)",
+      "computation": "judgment_date(2026-04-17) + 60 days = 2026-06-16",
+      "description": "Second respondent to disburse compensation and benefits within 60 days.",
+      "triggered_by": {
+        "paragraph_index": 20,
+        "matched_phrase": "within a period of sixty days"
+      }
+    },
+    {
+      "rule_id": "directive_relative_deadline:within_n_weeks",
+      "rule_version": "0.1.0",
+      "target_role": "Chief Executive Officer, Karnataka Industrial Areas Development Board",
+      "deadline": "2026-05-15T00:00:00+00:00",
+      "severity": "active",
+      "statute": "Operative direction in paragraph 21 (Article 226, Constitution of India)",
+      "computation": "judgment_date(2026-04-17) + 4 weeks = 2026-05-15",
+      "description": "Second respondent to file compliance affidavit within four weeks.",
+      "triggered_by": {
+        "paragraph_index": 21,
+        "matched_phrase": "within four weeks"
+      }
+    },
+    {
+      "rule_id": "directive_relative_deadline:within_n_months",
+      "rule_version": "0.1.0",
+      "target_role": "Principal District Judge (Reference Court constituted under Section 30, Karnataka Industrial Areas Development Act, 1966)",
+      "deadline": "2026-10-17T00:00:00+00:00",
+      "severity": "active",
+      "statute": "Operative direction in paragraph 22 (Article 226, Constitution of India)",
+      "computation": "judgment_date(2026-04-17) + 6 months = 2026-10-17",
+      "description": "Reference court to dispose of pending reference within six months.",
+      "triggered_by": {
+        "paragraph_index": 22,
+        "matched_phrase": "within a period of six months"
+      }
+    }
   ]
 }

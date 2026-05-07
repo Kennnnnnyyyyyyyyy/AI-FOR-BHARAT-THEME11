@@ -1,0 +1,29 @@
+{
+  "case_id": "WP13296_2022",
+  "court": "High Court of Karnataka at Bengaluru",
+  "case_number": "WP 13296/2022",
+  "judgment_date": "2026-04-17",
+  "petitioner": {
+    "name": "Sri V. Venkateshulu",
+    "designation": null
+  },
+  "respondents": [
+    {
+      "ordinal": 1,
+      "name": "The State of Karnataka",
+      "designation": "Principal Secretary, Department of Industries and Commerce, Government of Karnataka"
+    },
+    {
+      "ordinal": 2,
+      "name": "Karnataka Industrial Areas Development Board",
+      "designation": "Chief Executive Officer, Karnataka Industrial Areas Development Board"
+    }
+  ],
+  "primary_respondent_ordinal": 2,
+  "additional_forums": [
+    {
+      "key": "reference_court",
+      "designation": "Principal District Judge (Reference Court constituted under Section 30, Karnataka Industrial Areas Development Act, 1966)"
+    }
+  ]
+}

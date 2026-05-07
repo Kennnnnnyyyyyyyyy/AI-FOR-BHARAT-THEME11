@@ -1,0 +1,67 @@
+version: 0.1.0
+description: |
+  Verdict-driven limitation rules. Each rule fires on exactly one verdict
+  classification and produces one ActionItem with a defensive or informational
+  severity — these are windows the respondent must monitor, not obligations
+  the respondent must perform.
+
+  Statute citations are full and quotable (§3.5 — a rule without a statute
+  does not exist). The verdict classifier's enum (`Verdict`) is the
+  authoritative input; do not add or rename verdict keys here without
+  updating `kartavya/schemas/extraction.py` in the same commit.
+
+rules:
+  - rule_id: dismissed_slp_window
+    verdict: dismissed
+    period_days: 90
+    severity: defensive
+    statute: "Article 136, Constitution of India; Limitation Act, 1963 — Article 133"
+    target_role_source: primary_respondent
+    description_template: |-
+      Monitor SLP (Special Leave Petition) window in the Supreme Court.
+      Petitioner has 90 days from the judgment date to file an SLP under
+      Article 136. Respondent should be prepared to defend if filed.
+
+  - rule_id: allowed_review_window
+    verdict: allowed
+    period_days: 30
+    severity: defensive
+    statute: "Order XLVII Rule 1, Code of Civil Procedure, 1908; Limitation Act, 1963 — Article 124"
+    target_role_source: primary_respondent
+    description_template: |-
+      Monitor review-petition window before this Court. Respondent has
+      30 days from the judgment date to file a review petition under
+      Order XLVII CPC if the verdict is to be challenged.
+
+  - rule_id: partly_allowed_review_window
+    verdict: partly_allowed
+    period_days: 30
+    severity: defensive
+    statute: "Order XLVII Rule 1, Code of Civil Procedure, 1908; Limitation Act, 1963 — Article 124"
+    target_role_source: primary_respondent
+    description_template: |-
+      Monitor review-petition window before this Court. Respondent has
+      30 days from the judgment date to file a review petition on the
+      adverse findings under Order XLVII CPC.
+
+  - rule_id: remanded_compliance_monitoring
+    verdict: remanded
+    period_days: null  # ongoing monitoring; no fixed limitation
+    severity: informational
+    statute: "Article 226, Constitution of India (remand directions)"
+    target_role_source: primary_respondent
+    description_template: |-
+      Monitor lower court / authority compliance with remand directions.
+      No fixed limitation; flag for officer review to set a tracking
+      cadence based on the remand instructions.
+
+  - rule_id: disposed_with_directions_no_window
+    verdict: disposed_with_directions
+    period_days: null
+    severity: informational
+    statute: "Article 226, Constitution of India (directions issued)"
+    target_role_source: primary_respondent
+    description_template: |-
+      Disposition with directions does not by itself trigger a limitation
+      window. Compliance with the issued directions is captured separately
+      as ACTIVE action items via the directive extractor.

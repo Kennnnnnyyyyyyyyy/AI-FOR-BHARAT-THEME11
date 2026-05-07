@@ -13,6 +13,12 @@ from kartavya.schemas.audit import (
     AuditEventType,
     EntityType,
 )
+from kartavya.schemas.case import (
+    AdditionalForum,
+    CaseMetadata,
+    Petitioner,
+    Respondent,
+)
 from kartavya.schemas.confidence import (
     HIGH_STAKES_FIELDS,
     ConfidenceTier,
@@ -36,8 +42,10 @@ __all__ = [
     "ActionPlan",
     "ActorKind",
     "ActorRef",
+    "AdditionalForum",
     "AuditEvent",
     "AuditEventType",
+    "CaseMetadata",
     "ConfidenceTier",
     "EntityType",
     "ExtractionProvenance",
@@ -47,6 +55,8 @@ __all__ = [
     "Paragraph",
     "ParagraphClassification",
     "ParagraphLabel",
+    "Petitioner",
+    "Respondent",
     "RuleTrace",
     "Severity",
     "Verdict",

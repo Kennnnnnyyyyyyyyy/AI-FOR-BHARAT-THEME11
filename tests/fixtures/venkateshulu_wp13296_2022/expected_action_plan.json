@@ -1,0 +1,39 @@
+{
+  "_comment": "Ground truth for the rules engine on the Venkateshulu fixture. The integration test asserts on (rule_id, target_role, deadline_date, severity) for each item — UUIDs and generated_at timestamps are excluded because they are non-deterministic per run. P021 ('within four weeks of disbursement') is anchored to judgment_date in the prototype; the contingent-anchor case ('of disbursement') is a known simplification deferred to Round 2.",
+  "rule_engine_version": "0.1.0",
+  "case_id": "WP13296_2022",
+  "expected_item_count": 4,
+  "items": [
+    {
+      "rule_id": "dismissed_slp_window",
+      "target_role": "Chief Executive Officer, Karnataka Industrial Areas Development Board",
+      "deadline_date": "2026-07-16",
+      "severity": "defensive",
+      "statute_contains": "Article 136"
+    },
+    {
+      "rule_id_prefix": "directive_relative_deadline:within_n_days",
+      "paragraph_index": 20,
+      "target_role": "Chief Executive Officer, Karnataka Industrial Areas Development Board",
+      "deadline_date": "2026-06-16",
+      "severity": "active",
+      "statute_contains": "paragraph 20"
+    },
+    {
+      "rule_id_prefix": "directive_relative_deadline:within_n_weeks",
+      "paragraph_index": 21,
+      "target_role": "Chief Executive Officer, Karnataka Industrial Areas Development Board",
+      "deadline_date": "2026-05-15",
+      "severity": "active",
+      "statute_contains": "paragraph 21"
+    },
+    {
+      "rule_id_prefix": "directive_relative_deadline:within_n_months",
+      "paragraph_index": 22,
+      "target_role": "Principal District Judge (Reference Court constituted under Section 30, Karnataka Industrial Areas Development Act, 1966)",
+      "deadline_date": "2026-10-17",
+      "severity": "active",
+      "statute_contains": "paragraph 22"
+    }
+  ]
+}

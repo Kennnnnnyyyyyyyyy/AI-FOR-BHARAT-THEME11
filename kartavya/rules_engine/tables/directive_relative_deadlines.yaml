@@ -1,0 +1,62 @@
+version: 0.1.0
+description: |
+  Period-pattern parser table for operative-direction deadlines. Patterns are
+  applied in order; first match wins. Concrete patterns (within N days/weeks/
+  months) precede open-ended ones (expeditiously, forthwith) so that a
+  directive carrying both a courtesy phrase and a hard deadline ("expeditiously
+  and, in any event, within six months") binds to the hard deadline.
+
+  Open-ended patterns set `flag_for_officer_review: true` and produce no
+  computed deadline — the rules engine emits an ActionItem with `deadline=null`
+  and ACTIVE severity, surfaced in officer review for manual deadline setting.
+  This avoids guessing a deadline the court did not specify, consistent with
+  §3.1 ("the LLM never computes deadlines") — neither does the rules engine
+  when the directive itself doesn't carry one.
+
+  Numeric word-tokens that appear in Indian judgment idiom ("within sixty
+  days", "within four weeks") are mapped via `word_to_number`. The parser
+  is NOT general English — it is calibrated to the phrasing seen in
+  Karnataka High Court orders.
+
+  Statute citation for directive-driven deadlines references the source
+  paragraph (the operative direction itself), not a generic statute, because
+  the obligation is created by the court's order under Article 226.
+
+patterns:
+  - pattern_id: within_n_days
+    regex: 'within\s+(?:a\s+period\s+of\s+)?(\d+|sixty|thirty|fifteen|forty[-\s]five|ninety|one\s+hundred\s+and\s+twenty)\s+days?'
+    unit: days
+    flag_for_officer_review: false
+
+  - pattern_id: within_n_weeks
+    regex: 'within\s+(?:a\s+period\s+of\s+)?(\d+|two|three|four|six|eight|twelve)\s+weeks?'
+    unit: weeks
+    flag_for_officer_review: false
+
+  - pattern_id: within_n_months
+    regex: 'within\s+(?:a\s+period\s+of\s+)?(\d+|two|three|four|six|nine|twelve)\s+months?'
+    unit: months
+    flag_for_officer_review: false
+
+  - pattern_id: open_ended_expeditious
+    regex: 'expeditiously|as\s+soon\s+as\s+possible|forthwith|at\s+the\s+earliest|without\s+delay'
+    unit: null
+    flag_for_officer_review: true
+
+word_to_number:
+  fifteen: 15
+  thirty: 30
+  forty-five: 45
+  forty five: 45
+  sixty: 60
+  ninety: 90
+  one hundred and twenty: 120
+  two: 2
+  three: 3
+  four: 4
+  six: 6
+  eight: 8
+  nine: 9
+  twelve: 12
+
+statute_template: "Operative direction in paragraph {paragraph_index} (Article 226, Constitution of India)"

@@ -300,6 +300,12 @@ Locked LLM: `llama3.1:8b-instruct-q4_K_M` via local Ollama. Do not switch models
 *Ingestion → Extraction:*
 - `Paragraph` — id, page, bounding_box, text, paragraph_index
 
+*Case metadata (input to rules engine):*
+- `CaseMetadata` — case_id, court, case_number, judgment_date, petitioner, respondents, primary_respondent_ordinal, additional_forums. Loaded from per-case `case.json` adjacent to `paragraphs.json`. The judgment_date is authoritative input; the LLM never extracts it (§3.1).
+- `Petitioner` — name, designation (designation null for private petitioners)
+- `Respondent` — ordinal (1-indexed, matches case caption), name, designation (per §3.3, never a person name)
+- `AdditionalForum` — key, designation. Non-respondent forum addressed by an operative direction (e.g. a reference court). Resolved by the responsibility mapper from the directive's addressee text via the `key`.
+
 *Extraction outputs:*
 - `ParagraphClassification` — paragraph_id, label, confidence, provenance
 - `ParagraphLabel` — enum (`OPERATIVE`, `CONTEXTUAL`, `PROCEDURAL`); operational taxonomy per §10.1. Three labels, indexed on what the officer must do — not on the rhetorical content of the paragraph. Only `OPERATIVE` paragraphs feed the rules engine.
@@ -367,19 +373,44 @@ When uncertain, label `CONTEXTUAL`. False-positive `OPERATIVE` creates phantom o
 
 Pure Python. No imports from `api/`, `workers/`, `db/`, `extraction/`, `ingestion/`, `audit/`.
 
-Input: `ExtractionResult`. Output: `ActionPlan` with `action_items` each carrying a `rule_trace`.
+Inputs: `CaseMetadata` + `ExtractionResult` + `paragraphs`. Output: `ActionPlan` with `action_items` each carrying a `rule_trace` and the `rule_engine_version` stamped on the plan.
 
-Every rule cites a statute in its YAML entry. A rule without a statute citation does not exist. Date math via `python-dateutil`; working-day and holiday handling lives in `calendar.py`.
+Every rule cites a statute in its YAML entry. A rule without a statute citation does not exist. Date math via `python-dateutil`; working-day and holiday handling lives in `calendar.py` (deferred to Round 2 — calendar-day arithmetic for now).
+
+Entry point: `kartavya.rules_engine.generate_action_plan(case, extraction, paragraphs) -> ActionPlan`. The function is pure; it loads YAML once at first call, caches per process, and is safe to call repeatedly.
+
+`RULE_ENGINE_VERSION` is a module-level constant in `rules_engine/__init__.py`. Bump it on any change to engine code or to YAML rule tables under `tables/`. Every emitted `ActionPlan` carries this version per §3.5 — the chain of reproducibility is unbroken.
 
 Rule trace format:
 ```python
 class RuleTrace(BaseModel):
     rule_id: str
-    rule_version: str
+    rule_version: str       # SemVer of the YAML rule table
     statute: str            # "Article 136, Constitution of India"
-    triggered_by: dict      # {"verdict": "dismissed", "state_is_respondent": true}
+    triggered_by: dict      # {"verdict": "dismissed"} or {"paragraph_index": 20, "matched_phrase": "..."}
     computation: str        # "judgment_date(2026-04-17) + 90 days = 2026-07-16"
 ```
+
+**Rule tables.** All rules live in versioned YAML under `rules_engine/tables/`. Two table families today; both validated at table-load time (severity strings against the `Severity` enum, regex patterns compile-checked).
+
+- `slp_window.yaml` — verdict-driven limitation rules. One rule per `Verdict` enum value:
+  - `dismissed` → 90-day Article 136 SLP window, severity `defensive`
+  - `allowed` → 30-day CPC Order XLVII review window, severity `defensive`
+  - `partly_allowed` → 30-day CPC Order XLVII review window, severity `defensive`
+  - `remanded` → no fixed period; ongoing monitoring, severity `informational`
+  - `disposed_with_directions` → no fixed period; the issued directions are captured as ACTIVE items via the directive extractor, severity `informational`
+- `directive_relative_deadlines.yaml` — period-pattern parser for operative directions. First-match-wins ordering:
+  1. `within_n_days`, `within_n_weeks`, `within_n_months` — concrete patterns, compute an absolute deadline as `judgment_date + N`. Numeric word tokens (`sixty`, `four`, `six`) are mapped via `word_to_number`.
+  2. `open_ended_expeditious` — fallback for "expeditiously" / "forthwith" / "as soon as possible" / "without delay" / "at the earliest". Sets `flag_for_officer_review: true` and produces an ActionItem with `deadline=null`. The rules engine never guesses a deadline the court did not specify.
+
+  Concrete patterns precede open-ended ones so a directive carrying both ("expeditiously and, in any event, within six months") binds to the hard deadline.
+
+**Responsibility mapping (`responsibility/`).** A directive's addressee text (e.g. "the second respondent", "the reference court") is resolved to a designation string via `kartavya.responsibility.map_addressee(addressee, case_metadata)`. Two-stage resolution:
+
+1. Look up the addressee in the case's respondents (via ordinal — "the second respondent" → `respondents[ordinal=2].designation`) or `additional_forums` (via key alias — "the reference court" → `forums[key="reference_court"].designation`). This is the authoritative source for the case at hand.
+2. Fall back to `responsibility/tables/designations.yaml` for well-known forum patterns when the case metadata doesn't carry the addressee.
+
+If neither path produces a confident match, the function returns the sentinel string `MAPPING_REQUIRED` per §3.3. Callers must surface `MAPPING_REQUIRED` to the reviewer for officer correction; never substitute a guess. Verdict-driven action items use `primary_respondent_designation(case)`, which reads the `primary_respondent_ordinal` field on `CaseMetadata`.
 
 ### 10.3 Audit (`audit/`)
 
@@ -515,9 +546,20 @@ When asked, push back and ask whether it's prototype-critical. Default answer: d
 
 Material changes (Tier-1 invariants, module boundaries, dependency list) require a version bump and a `CHANGELOG.md` entry. Phase changes (§1) are not version bumps.
 
-**Version:** 2.3.4
+**Version:** 2.4.0
 **Last updated:** 2026-05-07
 **Phase set:** PROTOTYPE through 2026-05-07
+
+**Changelog (2.3.4 → 2.4.0):**
+- Rules engine activated for the first time (`kartavya/rules_engine/`). Pure Python, YAML-driven, deterministic deadline calculation per §3.1 / §3.5 / §10.2. Entry point: `generate_action_plan(case, extraction, paragraphs) -> ActionPlan`. `RULE_ENGINE_VERSION = "0.1.0"` stamped on every emitted plan.
+- Two YAML rule tables, each with SemVer per §3.5:
+  - `tables/slp_window.yaml` — all five `Verdict` enum values mapped to limitation windows (Article 136 SLP for dismissals, CPC Order XLVII review for allowed / partly_allowed, ongoing monitoring for remanded / disposed_with_directions).
+  - `tables/directive_relative_deadlines.yaml` — period-pattern parser for operative directions; concrete `within_n_{days,weeks,months}` patterns precede open-ended `expeditiously` / `forthwith` patterns; open-ended hits flag for officer review with `deadline=null` rather than guessing.
+- Responsibility mapper activated (`kartavya/responsibility/`). Resolves directive addressee text to a designation (§3.3) via two-stage lookup (case-specific respondents/forums first, `tables/designations.yaml` fallback second). Returns the `MAPPING_REQUIRED` sentinel when neither path is confident — never guesses a designation.
+- New schemas (added to §9 catalogue): `CaseMetadata`, `Petitioner`, `Respondent`, `AdditionalForum`. Loaded from per-case `case.json` adjacent to `paragraphs.json`. Carries `judgment_date` — the LLM still never extracts dates (§3.1); the rules engine receives the date as authoritative input.
+- New fixture files for Venkateshulu: `case.json` (KIADB as second respondent, reference court as additional forum, judgment_date 2026-04-17) and `expected_action_plan.json` (4 expected items with the deadline math 60d → 2026-06-16, 4w → 2026-05-15, 6mo → 2026-10-17, 90d-SLP → 2026-07-16). Per §5.2.
+- Integration test now runs the rules engine after extraction, writes the `ActionPlan` to the debug dump, and asserts (rule_id, target_role, deadline_date, severity, statute_substring) against `expected_action_plan.json`.
+- Why minor bump (2.3.4 → 2.4.0, not patch): new module-boundary activation (rules_engine + responsibility populated for the first time), new schemas in §9 catalogue, new fixture file family per §5.2, new YAML rule tables per §3.5. This is the largest single addition since 2.0.0. Patch bumps were appropriate for the v2/v3 directive prompt revisions (within an existing module); this expands the architecture proper.
 
 **Changelog (2.3.3 → 2.3.4):**
 - Directive extractor prompt re-authored as `operative_extractor.v3.md`; v1 and v2 retained per §3.5. Two coupled defects fixed in one revision because they share the same boundary ("what counts as a directive"):

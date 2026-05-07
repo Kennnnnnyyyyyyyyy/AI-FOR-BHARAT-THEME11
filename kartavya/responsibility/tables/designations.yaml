@@ -1,0 +1,33 @@
+version: 0.1.0
+description: |
+  Fallback designations used when a directive's addressee text cannot be
+  matched to a case-specific entry in `case.json`. Production deployments
+  will replace this with a database-backed table keyed on department.
+  For the prototype, this is the small set of canonical Karnataka roles
+  the rules engine is most likely to encounter.
+
+  The mapper consults `case.json`'s respondents and additional_forums first;
+  this file is consulted only when no case-specific entry matches AND the
+  addressee text matches one of the well-known patterns below. If neither
+  path produces a confident match, the mapper returns `MAPPING_REQUIRED`
+  per §3.3 — never guess.
+
+ordinal_aliases:
+  first: 1
+  second: 2
+  third: 3
+  fourth: 4
+  fifth: 5
+
+forum_aliases:
+  reference court: reference_court
+  reference_court: reference_court
+  district court: district_court
+  city civil court: city_civil_court
+  appellate authority: appellate_authority
+
+fallback_designations:
+  reference_court: "Principal District Judge (Reference Court constituted under the relevant statute)"
+  district_court: "Principal District Judge"
+  city_civil_court: "Principal Judge, City Civil Court"
+  appellate_authority: "Appellate Authority designated under the relevant statute"

@@ -1,4 +1,4 @@
-.PHONY: help bootstrap dev test lint format clean docker-up docker-down demo-venkateshulu demo-positive
+.PHONY: help bootstrap dev test lint format clean docker-up docker-down demo-venkateshulu demo-positive build-demo
 
 help:
 	@echo "Kartavya Development Commands"
@@ -60,5 +60,8 @@ demo-positive:
 	.venv/bin/python -m kartavya.cli.run \
 	    tests/fixtures/synthetic_disposed_with_directions/judgment.pdf \
 	    --dry-run --demo-positive --today 2026-03-15
+
+build-demo:
+	.venv/bin/python scripts/build_demo.py
 
 .SILENT: help

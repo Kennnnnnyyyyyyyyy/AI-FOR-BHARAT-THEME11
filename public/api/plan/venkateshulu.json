@@ -1,0 +1,77 @@
+{
+  "case_number": "WP 13296/2022",
+  "court": "High Court of Karnataka at Bengaluru",
+  "judgment_date": "2026-04-17",
+  "petitioner": "Sri V. Venkateshulu",
+  "respondents": [
+    {
+      "no": 1,
+      "designation": "Secretary, Ministry of Mines",
+      "organization": "Government of India"
+    },
+    {
+      "no": 2,
+      "designation": "Joint Secretary, Ministry of Mines",
+      "organization": "Government of India"
+    },
+    {
+      "no": 3,
+      "designation": "Principal Secretary to Government, Commerce and Industries Department (MSME and Mines)",
+      "organization": "Government of Karnataka"
+    },
+    {
+      "no": 4,
+      "designation": "Secretary II (Mines), Commerce and Industries Department",
+      "organization": "Government of Karnataka"
+    },
+    {
+      "no": 5,
+      "designation": "Director (Mines), Department of Mines and Geology",
+      "organization": "Government of Karnataka"
+    },
+    {
+      "no": 6,
+      "designation": "Senior Geologist, Department of Mines and Geology",
+      "organization": "Government of Karnataka"
+    }
+  ],
+  "verdict_class": "DISMISSED",
+  "engine_version": "0.3.0",
+  "today": "2026-05-07",
+  "paragraph_total": 24,
+  "paragraph_summary": {
+    "FACTS": 12,
+    "ARGUMENTS": 2,
+    "REASONING": 6,
+    "PRECEDENT_CITATION": 3,
+    "OPERATIVE": 1
+  },
+  "actions": [
+    {
+      "kind": "DEFENSIVE_MONITOR",
+      "title": "Monitor SLP window",
+      "description": "Petitioner has 90 days from 2026-04-17 to file a Special Leave Petition under Article 136 of the Constitution. Respondent should be prepared to defend if filed.",
+      "deadline": "2026-07-16",
+      "days_from_today": 70,
+      "target": "R3: Principal Secretary to Government, Commerce and Industries Department (MSME and Mines)",
+      "rule_id": "dismissed_slp_window",
+      "rule_version": "0.3.0",
+      "statute": "Article 136, Constitution of India; Limitation Act, 1963, Article 133",
+      "source_paragraph_index": null,
+      "source_text": null,
+      "source_voice_spans": [],
+      "verbatim_text": null,
+      "verbatim_char_span": null,
+      "computation_trace": {
+        "kind": "verdict",
+        "verdict_class": "DISMISSED",
+        "judgment_date": "2026-04-17",
+        "computation": "2026-04-17 + 90 days = 2026-07-16",
+        "rule_id": "dismissed_slp_window",
+        "rule_version": "0.3.0",
+        "statute": "Article 136, Constitution of India; Limitation Act, 1963, Article 133"
+      }
+    }
+  ],
+  "errors": []
+}

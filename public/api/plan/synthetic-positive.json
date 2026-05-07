@@ -1,0 +1,144 @@
+{
+  "case_number": "WP 8472/2025",
+  "court": "High Court of Karnataka at Bengaluru",
+  "judgment_date": "2026-03-15",
+  "petitioner": "Smt. Radha Krishnan",
+  "respondents": [
+    {
+      "no": 1,
+      "designation": "State of Karnataka, Represented by Its Principal Secretary, Revenue Department",
+      "organization": "Government of Karnataka"
+    },
+    {
+      "no": 2,
+      "designation": "Deputy Commissioner",
+      "organization": "Government of Karnataka"
+    },
+    {
+      "no": 3,
+      "designation": "Tahsildar, Jayanagar",
+      "organization": "Government of Karnataka"
+    }
+  ],
+  "verdict_class": "DISPOSED_WITH_DIRECTIONS",
+  "engine_version": "0.3.0",
+  "today": "2026-03-15",
+  "paragraph_total": 6,
+  "paragraph_summary": {
+    "FACTS": 2,
+    "ARGUMENTS": 2,
+    "REASONING": 1,
+    "OPERATIVE": 1
+  },
+  "actions": [
+    {
+      "kind": "ACTIVE_OBLIGATION",
+      "title": "The third respondent is directed to complete field verification of the petitioner's application with",
+      "description": "The third respondent is directed to complete field verification of the petitioner's application within four weeks from the date of this order.",
+      "deadline": "2026-04-12",
+      "days_from_today": 28,
+      "target": "R3: Tahsildar, Jayanagar",
+      "rule_id": "directive_relative_deadline:within_n_weeks",
+      "rule_version": "0.3.0",
+      "statute": "Operative direction in paragraph 6 (Article 226, Constitution of India)",
+      "source_paragraph_index": 6,
+      "source_text": "The third respondent is directed to complete field verification of the petitioner's application within four weeks from the date of this order. The second respondent is directed to pass a final order on the mutation application within sixty days from the date of this order. The first respondent is directed to ensure compliance and file a compliance affidavit within ninety days from the date of this order.",
+      "source_voice_spans": [],
+      "verbatim_text": "The third respondent is directed to complete field verification of the petitioner's application within four weeks from the date of this order.",
+      "verbatim_char_span": [
+        0,
+        142
+      ],
+      "computation_trace": {
+        "kind": "directive",
+        "verbatim_text": "The third respondent is directed to complete field verification of the petitioner's application within four weeks from the date of this order.",
+        "char_span": [
+          0,
+          142
+        ],
+        "time_clause": {
+          "raw": "within four weeks",
+          "unit": "WEEKS",
+          "quantity": 4
+        },
+        "computation": "2026-03-15 + 4 \u00d7 7 days = 2026-04-12",
+        "rule_id": "directive_relative_deadline:within_n_weeks",
+        "rule_version": "0.3.0",
+        "statute": "Operative direction in paragraph 6 (Article 226, Constitution of India)"
+      }
+    },
+    {
+      "kind": "ACTIVE_OBLIGATION",
+      "title": "The second respondent is directed to pass a final order on the mutation application within sixty day",
+      "description": "The second respondent is directed to pass a final order on the mutation application within sixty days from the date of this order.",
+      "deadline": "2026-05-14",
+      "days_from_today": 60,
+      "target": "R2: Deputy Commissioner",
+      "rule_id": "directive_relative_deadline:within_n_days",
+      "rule_version": "0.3.0",
+      "statute": "Operative direction in paragraph 6 (Article 226, Constitution of India)",
+      "source_paragraph_index": 6,
+      "source_text": "The third respondent is directed to complete field verification of the petitioner's application within four weeks from the date of this order. The second respondent is directed to pass a final order on the mutation application within sixty days from the date of this order. The first respondent is directed to ensure compliance and file a compliance affidavit within ninety days from the date of this order.",
+      "source_voice_spans": [],
+      "verbatim_text": "The second respondent is directed to pass a final order on the mutation application within sixty days from the date of this order.",
+      "verbatim_char_span": [
+        143,
+        273
+      ],
+      "computation_trace": {
+        "kind": "directive",
+        "verbatim_text": "The second respondent is directed to pass a final order on the mutation application within sixty days from the date of this order.",
+        "char_span": [
+          143,
+          273
+        ],
+        "time_clause": {
+          "raw": "within sixty days",
+          "unit": "DAYS",
+          "quantity": 60
+        },
+        "computation": "2026-03-15 + 60 \u00d7 1 days = 2026-05-14",
+        "rule_id": "directive_relative_deadline:within_n_days",
+        "rule_version": "0.3.0",
+        "statute": "Operative direction in paragraph 6 (Article 226, Constitution of India)"
+      }
+    },
+    {
+      "kind": "ACTIVE_OBLIGATION",
+      "title": "The first respondent is directed to ensure compliance and file a compliance affidavit within ninety",
+      "description": "The first respondent is directed to ensure compliance and file a compliance affidavit within ninety days from the date of this order.",
+      "deadline": "2026-06-13",
+      "days_from_today": 90,
+      "target": "R1: State of Karnataka, Represented by Its Principal Secretary, Revenue Department",
+      "rule_id": "directive_relative_deadline:within_n_days",
+      "rule_version": "0.3.0",
+      "statute": "Operative direction in paragraph 6 (Article 226, Constitution of India)",
+      "source_paragraph_index": 6,
+      "source_text": "The third respondent is directed to complete field verification of the petitioner's application within four weeks from the date of this order. The second respondent is directed to pass a final order on the mutation application within sixty days from the date of this order. The first respondent is directed to ensure compliance and file a compliance affidavit within ninety days from the date of this order.",
+      "source_voice_spans": [],
+      "verbatim_text": "The first respondent is directed to ensure compliance and file a compliance affidavit within ninety days from the date of this order.",
+      "verbatim_char_span": [
+        274,
+        407
+      ],
+      "computation_trace": {
+        "kind": "directive",
+        "verbatim_text": "The first respondent is directed to ensure compliance and file a compliance affidavit within ninety days from the date of this order.",
+        "char_span": [
+          274,
+          407
+        ],
+        "time_clause": {
+          "raw": "within ninety days",
+          "unit": "DAYS",
+          "quantity": 90
+        },
+        "computation": "2026-03-15 + 90 \u00d7 1 days = 2026-06-13",
+        "rule_id": "directive_relative_deadline:within_n_days",
+        "rule_version": "0.3.0",
+        "statute": "Operative direction in paragraph 6 (Article 226, Constitution of India)"
+      }
+    }
+  ],
+  "errors": []
+}

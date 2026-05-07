@@ -1,0 +1,9 @@
+{
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/pdf/:slug",      "destination": "/pdf/:slug.pdf" },
+    { "source": "/api/plan/:slug", "destination": "/api/plan/:slug.json" }
+  ]
+}

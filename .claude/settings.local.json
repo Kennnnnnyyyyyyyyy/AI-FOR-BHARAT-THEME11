@@ -8,7 +8,14 @@
       "Bash(.venv/bin/python -m pytest tests/integration/test_apvc_pipeline.py -m live_ollama -q -s)",
       "Bash(tee /tmp/apvc_run_observe.log)",
       "Bash(.venv/bin/ruff check *)",
-      "Bash(tee /tmp/apvc_run_extractor_v2.log)"
+      "Bash(tee /tmp/apvc_run_extractor_v2.log)",
+      "Bash(curl -sf -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:8000/demo/review_screen.html)",
+      "Bash(.venv/bin/python -c \"from kartavya.rules_engine import generate_actions, RULE_ENGINE_VERSION; print\\('engine version:', RULE_ENGINE_VERSION\\)\")",
+      "Bash(.venv/bin/python -m pytest tests/test_engine_dismissed.py tests/test_grounding_invariants.py tests/test_phantom_cards_unconstructible.py -v)",
+      "Bash(.venv/bin/python *)",
+      "Bash(.venv/bin/mypy kartavya/extraction kartavya/schemas kartavya/audit kartavya/errors.py kartavya/rules_engine kartavya/responsibility)",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs -r ls -la)"
     ]
   }
 }

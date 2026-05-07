@@ -66,6 +66,16 @@ def expected_action_plan() -> dict:
     return json.loads((FIXTURE_DIR / "expected_action_plan.json").read_text())
 
 
+@pytest.mark.skip(
+    reason=(
+        "0.1.0 fixture quarantined; see Phase B. The synthetic Venkateshulu "
+        "fixture this test loaded was moved to "
+        "tests/fixtures/legacy/synthetic_venkateshulu_wp13296_2022/ because "
+        "its placeholder text did not match the real judgment. Phase A "
+        "supersedes this test with tests/test_engine_dismissed.py against the "
+        "stub fixture; Phase B will provide a real-PDF integration test."
+    )
+)
 @pytest.mark.live_ollama
 @pytest.mark.skipif(not _ollama_reachable(), reason="Ollama not reachable")
 def test_apvc_pipeline_meets_accuracy_gate(

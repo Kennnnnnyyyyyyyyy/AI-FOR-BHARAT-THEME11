@@ -26,7 +26,7 @@ statute strings (§3.5). Severity values are validated against the
 from __future__ import annotations
 
 import re
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
@@ -41,10 +41,17 @@ from kartavya.responsibility import (
 from kartavya.rules_engine import RULE_ENGINE_VERSION
 from kartavya.rules_engine.calendar import add_period
 from kartavya.rules_engine.trace import directive_trace, verdict_trace
-from kartavya.schemas.action_plan import ActionItem, ActionPlan, Severity
+from kartavya.schemas.action_plan import (
+    Action,
+    ActionItem,
+    ActionPlan,
+    LegacyActionPlan,
+    Severity,
+)
 from kartavya.schemas.case import CaseMetadata
 from kartavya.schemas.extraction import ExtractionResult, OperativeDirection
 from kartavya.schemas.paragraph import Paragraph
+from kartavya.schemas.parsed_judgment import ParsedJudgment
 
 _TABLE_DIR = Path(__file__).parent / "tables"
 _SLP_TABLE = _TABLE_DIR / "slp_window.yaml"
@@ -288,8 +295,14 @@ def generate_action_plan(
     case: CaseMetadata,
     extraction: ExtractionResult,
     paragraphs: list[Paragraph],
-) -> ActionPlan:
-    """Compose verdict-driven and directive-driven items into one ActionPlan."""
+) -> LegacyActionPlan:
+    """Legacy 0.1.0 path. Compose verdict-driven and directive-driven items.
+
+    Returns a `LegacyActionPlan` of `ActionItem` entries. Coexists with the
+    Phase A `generate_actions(...)` for one cycle. The integration test that
+    used the synthetic Venkateshulu fixture is now skipped per Phase A
+    acceptance #6.
+    """
     paragraph_by_id: dict[UUID, Paragraph] = {p.id: p for p in paragraphs}
 
     items: list[ActionItem] = []
@@ -302,7 +315,7 @@ def generate_action_plan(
     for direction in extraction.operative_directions:
         paragraph = paragraph_by_id.get(direction.paragraph_id)
         if paragraph is None:
-            # Should not happen — extraction.operative_directions are anchored
+            # Should not happen. extraction.operative_directions are anchored
             # by paragraph_id from the same extraction result. Skip rather
             # than crash if the invariant is ever violated upstream.
             continue
@@ -310,7 +323,7 @@ def generate_action_plan(
         if item is not None:
             items.append(item)
 
-    return ActionPlan(
+    return LegacyActionPlan(
         id=uuid4(),
         case_id=extraction.case_id,
         action_items=items,
@@ -319,4 +332,131 @@ def generate_action_plan(
     )
 
 
-__all__ = ["generate_action_plan"]
+# ---------- Phase A: 0.2.0 path ----------------------------------------------
+
+
+def _build_slp_monitor(case: ParsedJudgment) -> Action:
+    return Action(
+        kind="DEFENSIVE_MONITOR",
+        title="Monitor SLP window",
+        description=(
+            f"Petitioner has 90 days from {case.judgment_date.isoformat()} to "
+            "file a Special Leave Petition under Article 136 of the "
+            "Constitution. Respondent should be prepared to defend if filed."
+        ),
+        deadline=case.judgment_date + timedelta(days=90),
+        target_role_id="PRIMARY_STATE_RESPONDENT",
+        rule_id="dismissed_slp_window",
+        rule_version=RULE_ENGINE_VERSION,
+        statute_citation=(
+            "Article 136, Constitution of India; "
+            "Limitation Act, 1963, Article 133"
+        ),
+        source_directive_id=None,
+        source_paragraph_index=None,
+    )
+
+
+def _build_costs_recovery_monitor(case: ParsedJudgment) -> Action:
+    return Action(
+        kind="DEFENSIVE_MONITOR",
+        title="Monitor costs recovery",
+        description=(
+            "Costs were awarded against the petitioner. Track recovery and "
+            "any application by the petitioner to set aside or reduce costs."
+        ),
+        deadline=None,
+        target_role_id="PRIMARY_STATE_RESPONDENT",
+        rule_id="dismissed_with_costs_recovery",
+        rule_version=RULE_ENGINE_VERSION,
+        statute_citation=(
+            "Section 35, Code of Civil Procedure, 1908; "
+            "Karnataka High Court Rules"
+        ),
+        source_directive_id=None,
+        source_paragraph_index=None,
+    )
+
+
+def _human_review_required(case: ParsedJudgment, reason_code: str) -> Action:
+    return Action(
+        kind="HUMAN_REVIEW",
+        title=f"Human review required: {reason_code}",
+        description=(
+            f"Verdict class is {case.verdict_class} but no operative "
+            f"directives were extracted. Reason code: {reason_code}. "
+            "Plan routed to human-only queue."
+        ),
+        deadline=None,
+        target_role_id="PRIMARY_STATE_RESPONDENT",
+        rule_id=f"human_review:{reason_code.lower()}",
+        rule_version=RULE_ENGINE_VERSION,
+        statute_citation="N/A",
+        source_directive_id=None,
+        source_paragraph_index=None,
+    )
+
+
+def generate_actions(case: ParsedJudgment, today: date) -> ActionPlan:
+    """Phase A 0.2.0 entry point. Verdict-gated.
+
+    If `case.directives` is empty, fire only verdict-class rules:
+      DISMISSED                  -> SLP monitor
+      DISMISSED_WITH_COSTS       -> SLP monitor + costs recovery monitor
+      ALLOWED / PARTLY_ALLOWED   -> human review (allowed without directions)
+      DISPOSED_WITH_DIRECTIONS   -> human review (label without directives)
+      REMANDED                   -> human review (remanded without directives)
+
+    If `case.directives` is non-empty, fire applicable rules per directive.
+    The Phase A directive-rule registry is empty; Phase B (`v4` directive
+    extractor + the directive-deadline rule table) will populate it. Until
+    then, a non-empty directives list produces an empty actions list, which
+    the render-time validator catches as OBLIGATION_WITHOUT_SOURCE.
+
+    The `today` parameter is reserved for risk-tier classification and
+    overdue flagging; it is not used in Phase A but is required by the
+    brief's signature so callers can stop passing `date.today()` implicitly.
+    """
+    del today  # unused in Phase A; reserved for risk classification
+
+    actions: list[Action] = []
+
+    if not case.directives:
+        match case.verdict_class:
+            case "DISMISSED":
+                actions.append(_build_slp_monitor(case))
+            case "DISMISSED_WITH_COSTS":
+                actions.append(_build_slp_monitor(case))
+                actions.append(_build_costs_recovery_monitor(case))
+            case "ALLOWED" | "PARTLY_ALLOWED":
+                actions.append(
+                    _human_review_required(case, "ALLOWED_WITHOUT_DIRECTIONS")
+                )
+            case "DISPOSED_WITH_DIRECTIONS":
+                actions.append(
+                    _human_review_required(
+                        case, "DISPOSED_LABEL_BUT_NO_DIRECTIVES"
+                    )
+                )
+            case "REMANDED":
+                actions.append(
+                    _human_review_required(case, "REMANDED_WITHOUT_DIRECTIVES")
+                )
+        return ActionPlan(
+            case_number=case.case_number,
+            rule_engine_version=RULE_ENGINE_VERSION,
+            actions=actions,
+        )
+
+    # Phase A: directive rules registry is empty; Phase B populates it.
+    # Emitting nothing here is the correct conservative behavior. Any plan
+    # built from a non-empty directives list will go through the validators
+    # in rules_engine.validators, which flag the contradiction.
+    return ActionPlan(
+        case_number=case.case_number,
+        rule_engine_version=RULE_ENGINE_VERSION,
+        actions=actions,
+    )
+
+
+__all__ = ["generate_action_plan", "generate_actions"]

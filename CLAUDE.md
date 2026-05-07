@@ -546,9 +546,22 @@ When asked, push back and ask whether it's prototype-critical. Default answer: d
 
 Material changes (Tier-1 invariants, module boundaries, dependency list) require a version bump and a `CHANGELOG.md` entry. Phase changes (§1) are not version bumps.
 
-**Version:** 2.4.0
+**Version:** 2.5.0
 **Last updated:** 2026-05-07
 **Phase set:** PROTOTYPE through 2026-05-07
+
+**Changelog (2.4.0 → 2.5.0):**
+- Phase A architectural tightening on the rules engine path. Rules engine bumped 0.1.0 to 0.2.0. New canonical types coexist with legacy ones for one cycle.
+- New schemas: `Voice`, `SectionClass`, `VoiceSpan` (`schemas/voice.py`); `VerdictClass`, `GroundedParagraph`, `TimeClause`, `OperativeDirective`, `ParsedJudgment` (`schemas/parsed_judgment.py`); `Action`, `ActionPlan`, `ActionKind`, `TargetRoleId`, `LegacyActionPlan` (`schemas/action_plan.py`). All added to the §9 catalogue.
+- `ParsedJudgment.validate_directive_grounding` enforces six invariants on every `OperativeDirective` at construction: paragraph_index exists, char_span in bounds, verbatim_text equals paragraph.text[s:e], section_class is OPERATIVE, voice_in_span is COURT, actor_resolved is an FK into respondents. A directive that fails any check cannot be constructed.
+- `Action.target_role_id` is now an FK (int into Respondent.respondent_no) or the sentinel `PRIMARY_STATE_RESPONDENT` (resolves to lowest-numbered Karnataka state respondent). Free-form `target_role: str` retained as deprecated for legacy compatibility, removal planned in 0.3.0.
+- `rules_engine.engine.generate_actions(case, today)` is the new 0.2.0 entry point. Verdict-gated: when `case.directives` is empty, fires only verdict-class rules (DISMISSED → SLP monitor, ALLOWED / PARTLY_ALLOWED / DISPOSED_WITH_DIRECTIONS / REMANDED → human review). Existing `generate_action_plan(...)` retained, now returns `LegacyActionPlan`.
+- `rules_engine/validators.py` adds render-time validators: `TARGET_NOT_IN_RESPONDENTS`, `UNGROUNDED_PRIMARY_STATE_TARGET`, `OBLIGATION_WITHOUT_SOURCE`, `DISMISSED_WITH_OBLIGATION`, `SOURCE_PARAGRAPH_MISSING`, `SOURCE_PARAGRAPH_NOT_OPERATIVE`. A plan with any errors does not render; route to human review.
+- `Respondent` reshape: `ordinal` renamed to `respondent_no`; `organization` field added (required) so the engine can pick the Karnataka primary respondent. `name` demoted to optional. `CaseMetadata.primary_respondent_ordinal` renamed to `primary_respondent_no`.
+- New canonical fixture `tests/fixtures/venkateshulu_stub.py` reflects the real WP 13296/2022 (pure dismissal, no directives, six real respondents from Ministry of Mines and Karnataka Commerce and Industries Department). The synthetic placeholder fixture that historically produced four phantom cards is moved to `tests/fixtures/legacy/synthetic_venkateshulu_wp13296_2022/` with a quarantine README. The integration test that loaded it is marked `pytest.mark.skip`.
+- Phase A regression test `tests/test_phantom_cards_unconstructible.py` proves the four historical phantom cards trip TARGET_NOT_IN_RESPONDENTS, OBLIGATION_WITHOUT_SOURCE, DISMISSED_WITH_OBLIGATION, and SOURCE_PARAGRAPH_MISSING under the new validators. The architectural fix is structurally bound, not informally hoped for.
+- Why minor bump (2.4.0 → 2.5.0): new schemas in §9 catalogue, new module file in `rules_engine/`, new contract on `Action.target_role_id`. Deferred to Phase B: the v4 span-only directive prompt + extractor, real-PDF segmentation parser, voice tagger, cause-title parser, positive-case fixture.
+- Phase A scope discipline: no edits to `OperativeDirection`, the v3 directive prompt, or the v3 extractor (all retained per §3.5). No new directories. No new dependencies. Em-dash convention applied to new code only; existing files not retroactively swept.
 
 **Changelog (2.3.4 → 2.4.0):**
 - Rules engine activated for the first time (`kartavya/rules_engine/`). Pure Python, YAML-driven, deterministic deadline calculation per §3.1 / §3.5 / §10.2. Entry point: `generate_action_plan(case, extraction, paragraphs) -> ActionPlan`. `RULE_ENGINE_VERSION = "0.1.0"` stamped on every emitted plan.

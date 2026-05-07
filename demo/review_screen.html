@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Kartavya — Compliance Action Plan</title>
+<meta name="viewport" content="width=1200" />
+<style>
+  :root {
+    --ink: #1a1f2c;
+    --ink-soft: #4a5568;
+    --ink-mute: #7b8696;
+    --rule: #e3e7ee;
+    --rule-soft: #f1f4f8;
+    --bg: #ffffff;
+    --bg-card: #fcfdfe;
+    --accent: #1d4e89;            /* deep institutional blue */
+    --active: #b3261e;            /* red */
+    --defensive: #c2761b;         /* orange */
+    --informational: #1d4e89;     /* blue */
+    --green: #1b7042;
+    --amber: #c2761b;
+    --red: #b3261e;
+    --red-deep: #6f1716;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", "Noto Sans", "Noto Sans Kannada", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 40px 80px;
+  }
+  header.case {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+  }
+  .brand {
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 8px;
+  }
+  .brand .kn {
+    font-size: 18px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--accent);
+    margin-right: 8px;
+    vertical-align: -1px;
+  }
+  h1.case-title {
+    font-size: 26px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .case-meta {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .case-meta .sep { color: var(--ink-mute); margin: 0 8px; }
+  .verdict-tag {
+    display: inline-block;
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 1px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-left: 10px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-head h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--ink);
+  }
+  .section-head .meta {
+    font-size: 13px;
+    color: var(--ink-mute);
+  }
+
+  /* Action item card */
+  .item {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 28px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--bg-card);
+    padding: 20px 24px;
+    margin-bottom: 14px;
+  }
+  .item .deadline-col {
+    border-right: 1px solid var(--rule);
+    padding-right: 24px;
+  }
+  .item .date {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.1;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .item .countdown {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .item .countdown.green  { color: var(--green); }
+  .item .countdown.amber  { color: var(--amber); }
+  .item .countdown.red    { color: var(--red); }
+  .item .countdown.overdue { color: var(--red-deep); font-weight: 600; }
+  .item .target-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-mute);
+    margin-bottom: 2px;
+  }
+  .item .target-role {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.35;
+  }
+  .item .body-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .item .head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  .item .description {
+    white-space: pre-line;
+    font-size: 14.5px;
+    color: var(--ink);
+    flex: 1;
+  }
+  .severity-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid currentColor;
+    line-height: 1.4;
+  }
+  .severity-badge.active        { color: var(--active); }
+  .severity-badge.defensive     { color: var(--defensive); }
+  .severity-badge.informational { color: var(--informational); }
+  .item .statute {
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-mute);
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--rule);
+  }
+  .audit-toggle {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .audit-toggle::before {
+    content: "▸ ";
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+  .audit-toggle.open::before {
+    transform: rotate(90deg);
+  }
+  .audit-trail {
+    display: none;
+    margin-top: 10px;
+    padding: 12px 14px;
+    background: var(--rule-soft);
+    border-radius: 3px;
+    font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .audit-trail.open { display: block; }
+  .audit-trail .key { color: var(--ink-mute); }
+  .audit-trail .val { color: var(--ink); }
+
+  footer {
+    margin-top: 40px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    font-size: 12px;
+    color: var(--ink-mute);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  footer .system { letter-spacing: 0.04em; }
+  footer .system .kn { color: var(--accent); margin-right: 4px; }
+
+  .error-box {
+    border: 1px solid var(--red);
+    background: #fdf2f2;
+    color: var(--red-deep);
+    padding: 16px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .error-box code {
+    background: #fff;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid var(--rule);
+    font-size: 12.5px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="case">
+    <div class="brand"><span class="kn">ಕರ್ತವ್ಯ</span>Kartavya — Compliance Action Plan</div>
+    <h1 class="case-title" id="case-title">Loading…</h1>
+    <div class="case-meta" id="case-meta"></div>
+  </header>
+
+  <div class="section-head">
+    <h2>Action plan</h2>
+    <div class="meta" id="action-meta"></div>
+  </div>
+
+  <main id="actions"></main>
+
+  <footer>
+    <div id="footer-engine"></div>
+    <div class="system"><span class="kn">ಕರ್ತವ್ಯ</span>Kartavya · v2.4.0 · Karnataka State Pilot</div>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+// Hard-coded case header — case.json is not loaded by the integration test
+// dump; the demo screen pairs the action plan with the canonical fixture's
+// case identifier. Production will read from case.json directly.
+const CASE_HEADER = {
+  case_number: "WP 13296/2022",
+  court: "High Court of Karnataka at Bengaluru",
+  judgment_date: "2026-04-17",
+};
+
+const SEVERITY_LABEL = {
+  active: "Active obligation",
+  defensive: "Defensive · monitor",
+  informational: "Informational",
+};
+
+function formatDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function daysBetween(targetIso, today) {
+  const t = new Date(targetIso);
+  t.setUTCHours(0, 0, 0, 0);
+  const ms = t.getTime() - today.getTime();
+  return Math.round(ms / 86400000);
+}
+
+function countdownText(days) {
+  if (days < 0) return { text: "OVERDUE by " + Math.abs(days) + " day" + (Math.abs(days) === 1 ? "" : "s"), cls: "overdue" };
+  if (days === 0) return { text: "Due today", cls: "red" };
+  if (days < 30)  return { text: days + " day"   + (days === 1  ? "" : "s") + " remaining", cls: "red" };
+  if (days < 90)  return { text: days + " days remaining", cls: "amber" };
+  return { text: days + " days remaining", cls: "green" };
+}
+
+function escapeHtml(s) {
+  if (s == null) return "";
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+function render(data) {
+  const verdict = data.verdict_actual || "—";
+  document.getElementById("case-title").textContent = CASE_HEADER.case_number;
+  document.getElementById("case-meta").innerHTML =
+    escapeHtml(CASE_HEADER.court) +
+    '<span class="sep">·</span>' +
+    "Judgment dated " + formatDate(CASE_HEADER.judgment_date + "T00:00:00Z") +
+    '<span class="verdict-tag">Verdict: ' + escapeHtml(verdict) + "</span>";
+
+  const items = data.action_plan || [];
+  document.getElementById("action-meta").textContent =
+    items.length + " item" + (items.length === 1 ? "" : "s") +
+    " · Rules engine v" + (data.rule_engine_version || "?");
+
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
+  const itemsByDeadline = items.slice().sort((a, b) => {
+    if (!a.deadline && !b.deadline) return 0;
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return new Date(a.deadline) - new Date(b.deadline);
+  });
+
+  const main = document.getElementById("actions");
+  main.innerHTML = "";
+  itemsByDeadline.forEach((item, i) => {
+    const days = item.deadline ? daysBetween(item.deadline, today) : null;
+    const cd = days === null
+      ? { text: "Flagged for officer review", cls: "amber" }
+      : countdownText(days);
+    const sev = item.severity || "informational";
+    const sevLabel = SEVERITY_LABEL[sev] || sev;
+
+    const trailLines = [
+      ["rule_id",      item.rule_id],
+      ["rule_version", item.rule_version],
+      ["statute",      item.statute],
+      ["triggered_by", JSON.stringify(item.triggered_by || {})],
+      ["computation",  item.computation],
+      ["target_role",  item.target_role],
+    ];
+    const trailHtml = trailLines
+      .map(([k, v]) => '<span class="key">' + k + ':</span> <span class="val">' + escapeHtml(v) + "</span>")
+      .join("\n");
+
+    const card = document.createElement("article");
+    card.className = "item";
+    card.innerHTML =
+      '<div class="deadline-col">' +
+        '<div class="date">' + (item.deadline ? escapeHtml(formatDate(item.deadline)) : "Pending review") + "</div>" +
+        '<div class="countdown ' + cd.cls + '">' + escapeHtml(cd.text) + "</div>" +
+        '<div class="target-label">Responsible</div>' +
+        '<div class="target-role">' + escapeHtml(item.target_role || "—") + "</div>" +
+      "</div>" +
+      '<div class="body-col">' +
+        '<div class="head-row">' +
+          '<div class="description">' + escapeHtml(item.description || "") + "</div>" +
+          '<span class="severity-badge ' + sev + '">' + escapeHtml(sevLabel) + "</span>" +
+        "</div>" +
+        '<div class="statute">' + escapeHtml(item.statute || "—") + "</div>" +
+        '<button class="audit-toggle" data-target="trail-' + i + '">Show audit trail</button>' +
+        '<div class="audit-trail" id="trail-' + i + '">' + trailHtml + "</div>" +
+      "</div>";
+    main.appendChild(card);
+  });
+
+  // Wire toggle handlers (after DOM is built).
+  document.querySelectorAll(".audit-toggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = document.getElementById(btn.dataset.target);
+      const open = target.classList.toggle("open");
+      btn.classList.toggle("open", open);
+      btn.textContent = (open ? "Hide" : "Show") + " audit trail";
+    });
+  });
+
+  document.getElementById("footer-engine").textContent =
+    "Rules engine v" + (data.rule_engine_version || "?") +
+    " · Model: " + (data.model || "?") +
+    " · Paragraph accuracy: " + Math.round((data.accuracy || 0) * 100) + "%";
+}
+
+function showError(message) {
+  document.getElementById("case-title").textContent = "Cannot load action plan";
+  document.getElementById("case-meta").innerHTML = "";
+  document.getElementById("action-meta").textContent = "";
+  const main = document.getElementById("actions");
+  main.innerHTML = '<div class="error-box">' + message + "</div>";
+}
+
+fetch("../_debug_extraction.json", { cache: "no-store" })
+  .then(r => {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  })
+  .then(render)
+  .catch(err => {
+    const isFile = location.protocol === "file:";
+    const msg = isFile
+      ? "Browsers block <code>fetch()</code> against <code>file://</code> for security. " +
+        "Run a local static server from the repo root and re-open the page over HTTP:" +
+        "<br><br><code>python -m http.server 8000</code>" +
+        "<br><br>then visit <code>http://localhost:8000/demo/review_screen.html</code>."
+      : "Could not load <code>../_debug_extraction.json</code> — " + escapeHtml(err.message) +
+        ". Run the integration test to regenerate it: " +
+        "<code>pytest tests/integration/test_apvc_pipeline.py -m live_ollama</code>.";
+    showError(msg);
+  });
+</script>
+</body>
+</html>

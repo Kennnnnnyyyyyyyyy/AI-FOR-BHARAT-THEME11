@@ -10,8 +10,15 @@ the minor digit on rule additions / changes; the patch digit on engine
 code changes that don't change rule semantics.
 """
 
-RULE_ENGINE_VERSION = "0.1.0"
+RULE_ENGINE_VERSION = "0.2.0"
 
-from kartavya.rules_engine.engine import generate_action_plan  # noqa: E402
+from kartavya.rules_engine.engine import (  # noqa: E402
+    generate_action_plan,
+    generate_actions,
+)
 
-__all__ = ["RULE_ENGINE_VERSION", "generate_action_plan"]
+__all__ = [
+    "RULE_ENGINE_VERSION",
+    "generate_action_plan",
+    "generate_actions",
+]

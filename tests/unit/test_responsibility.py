@@ -26,17 +26,19 @@ def _make_case() -> CaseMetadata:
         petitioner=Petitioner(name="Test Petitioner", designation=None),
         respondents=[
             Respondent(
-                ordinal=1,
+                respondent_no=1,
                 name="The State of Karnataka",
                 designation="Principal Secretary, Department X",
+                organization="Government of Karnataka",
             ),
             Respondent(
-                ordinal=2,
+                respondent_no=2,
                 name="KIADB",
                 designation="Chief Executive Officer, KIADB",
+                organization="Government of Karnataka",
             ),
         ],
-        primary_respondent_ordinal=2,
+        primary_respondent_no=2,
         additional_forums=[
             AdditionalForum(
                 key="reference_court",

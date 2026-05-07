@@ -59,7 +59,7 @@ def map_addressee(addressee_text: str, case: CaseMetadata) -> str:
         ordinal = ordinal_aliases.get(word)
         if ordinal is not None:
             for r in case.respondents:
-                if r.ordinal == ordinal:
+                if r.respondent_no == ordinal:
                     return r.designation
 
     # 2. Forum alias: "the reference court" → additional_forums[key="reference_court"].

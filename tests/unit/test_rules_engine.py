@@ -76,10 +76,20 @@ def _case() -> CaseMetadata:
         judgment_date=date(2026, 4, 17),
         petitioner=Petitioner(name="Test", designation=None),
         respondents=[
-            Respondent(ordinal=1, name="State", designation="Principal Secretary X"),
-            Respondent(ordinal=2, name="KIADB", designation="CEO, KIADB"),
+            Respondent(
+                respondent_no=1,
+                name="State",
+                designation="Principal Secretary X",
+                organization="Government of Karnataka",
+            ),
+            Respondent(
+                respondent_no=2,
+                name="KIADB",
+                designation="CEO, KIADB",
+                organization="Government of Karnataka",
+            ),
         ],
-        primary_respondent_ordinal=2,
+        primary_respondent_no=2,
         additional_forums=[
             AdditionalForum(key="reference_court", designation="Principal District Judge (Reference Court)"),
         ],

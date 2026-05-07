@@ -51,6 +51,51 @@ pytest
 ```
 
 Expect **144 passed, 1 skipped**.
+56 +## Windows (no WSL)                                                                                                                                      
+      57 +                                                                                                                                                         
+      58 +If you're on Windows and don't want WSL, you can run everything natively. You just skip `make` and call Python directly.                                 
+      59 +                                                                                                                                                         
+      60 +**1. Install** (one-time):                                                                                                                               
+      61 +- Python 3.11 from <https://www.python.org/downloads/> — check **"Add Python to PATH"** during install.                                                  
+      62 +- Git from <https://git-scm.com/download/win>.                                                                                                           
+      63 +                                                                                                                                                         
+      64 +**2. Open Command Prompt (CMD)** — the simplest shell. Then:                                                                                             
+      65 +                                                                                                                                                         
+      56 +## Windows (no WSL)                                                                                                                                                                                        
+      57 +                                                                                                                                                                                                           
+      58 +If you're on Windows and don't want WSL, you can run everything natively. You just skip `make` and call Python directly.                                                                                   
+      59 +                                                                                                                                                                                                           
+      60 +**1. Install** (one-time):                                                                                                                                                                                 
+      61 +- Python 3.11 from <https://www.python.org/downloads/> — check **"Add Python to PATH"** during install.                                                                                                    
+      62 +- Git from <https://git-scm.com/download/win>.                                                                                                                                                             
+      63 +                                                                                                                                                                                                           
+      64 +**2. Open Command Prompt (CMD)** — the simplest shell. Then:                                                                                                                                               
+      65 +                                                                                                                                                                                                           
+      66 +```cmd                                                                                                                                                                                                     
+      67 +git clone https://github.com/Kennnnnnyyyyyyyyy/AI-FOR-BHARAT-THEME11.git                                                                                                                                   
+      68 +cd AI-FOR-BHARAT-THEME11                                                                                                                                                                                   
+      69 +py -3.11 -m venv .venv                                                                                                                                                                                     
+      70 +.venv\Scripts\activate                                                                                                                                                                                     
+      71 +pip install -r requirements.txt -r requirements-dev.txt                                                                                                                                                    
+      72 +```                                                                                                                                                                                                        
+      73 +                                                                                                                                                                                                           
+      74 +**3. Replace each `make ...` command with the Python equivalent:**                                                                                                                                         
+      75 +                                                                                                                                                                                                           
+      76 +| Instead of      | Run                                                                                                                                                |                                   
+      77 +| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |                                   
+      78 +| `make demo-venkateshulu` | `python -m kartavya.cli.run tests/fixtures/venkateshulu_real_pdf_wp13296_2022/original.pdf --dry-run --today 2026-05-07`                    |                                 
+      79 +| `make demo-positive`     | `python -m kartavya.cli.run tests/fixtures/synthetic_disposed_with_directions/judgment.pdf --dry-run --demo-positive --today 2026-03-15` |                                    
+      80 +| `make dev`               | `uvicorn kartavya.main:app --reload --host 0.0.0.0 --port 8000`                                                                          |                                    
+      81 +| `make test`              | `pytest`                                                                                                                                  |                                   
+      82 +                                                                                                                                                                                                           
+      83 +**Tips:**                                                                                                                                                                                                  
+      84 +- Using **PowerShell**? Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then activate with `.\.venv\Scripts\Activate.ps1`.                                                                 
+      85 +- Using **Git Bash** (installed with Git for Windows)? It supports the macOS/Linux commands directly — `source .venv/Scripts/activate` and so on.                                                          
+      86 +- Want `make` to actually work on Windows? `winget install GnuWin32.Make` (or use Chocolatey / Scoop). Then everything in the main section above works as-is.                                              
+      87 +                                                                                                                                                                                                           
+      88 +---                                                                                                                                                                                                        
+      89 +                                                                                                                                                                                                           
+      90  That's it. You don't need Docker, Postgres, Redis, or Ollama for the demo — the demo CLI uses stubbed LLM clients so everything runs offline.
 
 ---
 

@@ -136,7 +136,7 @@ def classify_paragraphs(
 
     anchor_map = build_anchor_map(paragraphs)
     paragraphs_by_id = {p.id: p for p in paragraphs}
-    _, prompt_body = _load_prompt("paragraph_classifier.v2.md")
+    _, prompt_body = _load_prompt("paragraph_classifier.v3.md")
 
     accepted_by_id: dict[UUID, ParagraphClassification] = {}
     failures_for_retry: list[ValidationFailure] = []

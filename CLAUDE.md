@@ -355,6 +355,14 @@ schema: VerdictClassification
 
 The Ollama wrapper computes prompt SHA-256 at call time and persists it on the extracted record. On JSON parse failure: one retry at temperature 0, then `EXTRACTION_FAILED`.
 
+**Paragraph classifier — three-check gate.** A paragraph is `OPERATIVE` only if all three hold; otherwise `CONTEXTUAL` (or `PROCEDURAL` per the metadata rules):
+
+1. *Speaker is the court itself* — not counsel, not a party, not a quoted precedent. Counsel cannot direct anyone; only the court does.
+2. *Speech act is directing or disposing*, not evaluative — phrases like "we find merit", "we are of the view", "we are not persuaded", "such conduct disentitles", "warrants interference" are evaluation, not direction. The court is reasoning toward a verdict; it has not yet announced one.
+3. *A current obligation is created or a final disposition is announced* — past-tense narration of earlier acts ("notice was issued", "an award came to be passed", "petitioner submitted a representation seeking exclusion") fails. Asking is not directing; describing history is not disposing.
+
+When uncertain, label `CONTEXTUAL`. False-positive `OPERATIVE` creates phantom obligations downstream; false-negative is recoverable in officer review. Surface forcefulness ("merit", "persuaded", "disentitles", "urges", "barred", "warrants") does not satisfy any check — rhetorical intensity is not legal force. The `paragraph_classifier.v3.md` prompt is the canonical formulation; this subsection is the contract.
+
 ### 10.2 Rules Engine (`rules_engine/`)
 
 Pure Python. No imports from `api/`, `workers/`, `db/`, `extraction/`, `ingestion/`, `audit/`.
@@ -507,9 +515,14 @@ When asked, push back and ask whether it's prototype-critical. Default answer: d
 
 Material changes (Tier-1 invariants, module boundaries, dependency list) require a version bump and a `CHANGELOG.md` entry. Phase changes (§1) are not version bumps.
 
-**Version:** 2.2.0
+**Version:** 2.3.0
 **Last updated:** 2026-05-06
 **Phase set:** PROTOTYPE through 2026-05-07
+
+**Changelog (2.2.0 → 2.3.0):**
+- §10.1: codified the three-check gate (speaker / speech-act / obligation) for the paragraph classifier. Names the boundary the v2 taxonomy left implicit between court reasoning and court directing — counsel cannot direct, evaluative voice is not disposition, past-tense narration is not a current obligation.
+- Why: v2 ran 83.33% on Venkateshulu against the 90% gate. All four misses were CONTEXTUAL→OPERATIVE on a single boundary — court evaluative voice ("we find merit", "we are not persuaded"), counsel urging an outcome, and past party representations being read as dispositive. Confidence on misses (0.92–0.98) was higher than on correct OPERATIVE classifications, so a confidence threshold could not rescue the gate.
+- Prompt re-authored as `paragraph_classifier.v3.md`; v1 and v2 retained per §3.5.
 
 **Changelog (2.1.0 → 2.2.0):**
 - §9 (catalogue): replaced the implicit 6-value `ParagraphLabel` (facts/arguments/reasoning/precedent/operative/decree) with the explicit 3-value operational taxonomy (`OPERATIVE`/`CONTEXTUAL`/`PROCEDURAL`); added `Verdict` enum entry that was previously implicit.

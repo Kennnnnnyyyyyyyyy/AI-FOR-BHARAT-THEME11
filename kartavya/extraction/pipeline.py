@@ -352,7 +352,7 @@ def extract_directions(
     if not operative_paragraphs:
         return []
 
-    _, prompt_body = _load_prompt("operative_extractor.v1.md")
+    _, prompt_body = _load_prompt("operative_extractor.v3.md")
     anchor_map = build_anchor_map(operative_paragraphs)
     body = "\n\n".join(
         f"=== PARAGRAPH {anchor_token(p)} ===\n{p.text.strip()}"
@@ -377,11 +377,27 @@ def extract_directions(
         paragraph = anchor_map.get(raw.anchor)
         if paragraph is None:
             rejected += 1
+            _log.warning(
+                "operative_direction_rejected",
+                reason="anchor_mismatch",
+                case_id=str(case_id),
+                anchor=raw.anchor[:80],
+                text_preview=raw.text[:80],
+                source_span_preview=raw.source_span[:80],
+            )
             continue
         # Substring check on source_span guards against past-tense leaks copied
         # from elsewhere; the prompt already rejects them, this is defence.
         if raw.source_span.lower() not in paragraph.text.lower():
             rejected += 1
+            _log.warning(
+                "operative_direction_rejected",
+                reason="span_mismatch",
+                case_id=str(case_id),
+                paragraph_id=str(paragraph.id),
+                anchor=raw.anchor,
+                source_span_preview=raw.source_span[:80],
+            )
             continue
         directions.append(
             OperativeDirection(
@@ -403,6 +419,14 @@ def extract_directions(
             )
         )
 
+    accepted_paragraph_ids: list[str] = []
+    seen_paragraph_ids: set[UUID] = set()
+    for d in directions:
+        if d.paragraph_id in seen_paragraph_ids:
+            continue
+        seen_paragraph_ids.add(d.paragraph_id)
+        accepted_paragraph_ids.append(str(d.paragraph_id))
+
     audit.record(
         event_type=AuditEventType.EXTRACTION_COMPLETED,
         entity_type=EntityType.CASE,
@@ -412,6 +436,7 @@ def extract_directions(
             "task": "operative_extractor",
             "accepted": len(directions),
             "rejected": rejected,
+            "accepted_paragraph_ids": accepted_paragraph_ids,
         },
         prompt_sha=metadata.prompt_sha,
         model_id=metadata.model_id,

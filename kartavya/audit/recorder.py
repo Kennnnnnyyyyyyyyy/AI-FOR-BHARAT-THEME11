@@ -74,6 +74,7 @@ def record(
         entity_id=str(entity_id),
         prompt_sha=prompt_sha,
         paragraph_count=len(event.paragraph_ids),
+        payload=event.payload,
     )
     return event
 

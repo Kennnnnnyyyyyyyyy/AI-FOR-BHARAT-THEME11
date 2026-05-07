@@ -515,14 +515,36 @@ When asked, push back and ask whether it's prototype-critical. Default answer: d
 
 Material changes (Tier-1 invariants, module boundaries, dependency list) require a version bump and a `CHANGELOG.md` entry. Phase changes (§1) are not version bumps.
 
-**Version:** 2.3.0
-**Last updated:** 2026-05-06
+**Version:** 2.3.4
+**Last updated:** 2026-05-07
 **Phase set:** PROTOTYPE through 2026-05-07
+
+**Changelog (2.3.3 → 2.3.4):**
+- Directive extractor prompt re-authored as `operative_extractor.v3.md`; v1 and v2 retained per §3.5. Two coupled defects fixed in one revision because they share the same boundary ("what counts as a directive"):
+  - **Polite imperatives are still directives.** Inter-court / inter-agency phrasings such as "the reference court is requested to … within six months" are directives when the court is the speaker, the act is forward-looking, and an obligation with a temporal trigger is created. Softness is judicial courtesy, not optionality. v2 missed P022 on this; v3 names the boundary explicitly with P022 as a worked positive example.
+  - **Dispositions are out of scope for the directive extractor.** Dismissal / allowance / partly-allowed / disposed-with-directions / remanded are captured by the verdict classifier as a verdict statement; downstream deadlines (e.g. Article 136 SLP window) flow from that signal, not from a directive. v2's positive-example list included "the writ petition is dismissed with costs", which led the model to emit a directive for P023; v3 removes that from the positive list and adds it as a worked negative example. Two stages, one signal each, no double-counting.
+- Why bumped to 2.3.4 (not appended to 2.3.3): the prior 2.3.3 entry is observability plumbing; this is a discrete prompt revision with a new scope ruling. Separate entries keep next-run attribution clean.
+- Note: the scope ruling lives in the prompt body for now. If we want to elevate it to a CLAUDE.md §10.1 contract block (paralleling the three-check gate that lives there for the paragraph classifier), that is a separate edit not authorized in this round.
+
+**Changelog (2.3.2 → 2.3.3):**
+- `extraction/pipeline.py` (`extract_directions`): operative_extractor `EXTRACTION_COMPLETED` audit event payload now carries `accepted_paragraph_ids: list[str]` — the deduplicated, insertion-ordered list of paragraph IDs that produced ≥1 accepted directive. `accepted` and `rejected` counters unchanged. The `paragraph_ids` audit-event field continues to carry the candidate input list per §3.2; `accepted_paragraph_ids` is a new payload key, not a redefinition of an existing one.
+- `tests/integration/test_apvc_pipeline.py`: same list now written to `_debug_extraction.json` under `operative_direction_paragraph_ids`. Test assertions unchanged.
+- Why bumped to 2.3.3 (not appended to 2.3.2): the prior 2.3.2 entry is a discrete prompt revision; this is telemetry plumbing on the same stage. Separate entries keep next-run attribution clean. No contract change beyond the new payload key.
+- Why this exists: the v2 directive-extractor run reported `accepted: 3, rejected: 0` against expected sources `[20, 21, 22]` with `missing: [22]`. The on-disk artifacts could not distinguish "3 directives from {P020, P021, P023}" from "3 directives from {P020, P021} with one duplicate". `accepted_paragraph_ids` is the smallest signal that disambiguates — needed before any further prompt revision.
+
+**Changelog (2.3.0 → 2.3.2):**
+- Directive extractor prompt re-authored as `operative_extractor.v2.md`; v1 retained per §3.5. Single-defect fix: anchor instruction. Why bumped to 2.3.2 (skipping 2.3.1): 2.3.0 absorbed both the v3 classifier and the follow-on observability work; this is a discrete prompt revision on a different pipeline stage and deserves its own attribution boundary.
+- Failure mode pinned by the observability run (2.3.0 appendix telemetry): model emitted directives with the literal placeholder string `<paragraph anchor copied verbatim>` as the anchor field, all 4/4 dropped at the anchor-mismatch guard. v1's prompt presented the placeholder syntax in the JSON shape but had no Rules entry naming the anchor format and no end-to-end worked example.
+- v2 changes: (1) added an explicit Rules entry naming the `P###-XXXXXXXX` anchor format and stating that the placeholder marker is not the value to emit; (2) added a worked example with a fabricated but realistic anchor (`P042-1a2b3c4d`) and a complete output JSON; (3) tightened the placeholder wording in the JSON shape to `<paragraph anchor exactly as given>` matching the v3 classifier's wording. The opening definition (v1 line 10), the example list (v1 lines 36–37), the disposition contradiction, and the conservative-bias instruction (v1 line 55) are all preserved verbatim — single-defect fix to keep next-run attribution clean.
 
 **Changelog (2.2.0 → 2.3.0):**
 - §10.1: codified the three-check gate (speaker / speech-act / obligation) for the paragraph classifier. Names the boundary the v2 taxonomy left implicit between court reasoning and court directing — counsel cannot direct, evaluative voice is not disposition, past-tense narration is not a current obligation.
 - Why: v2 ran 83.33% on Venkateshulu against the 90% gate. All four misses were CONTEXTUAL→OPERATIVE on a single boundary — court evaluative voice ("we find merit", "we are not persuaded"), counsel urging an outcome, and past party representations being read as dispositive. Confidence on misses (0.92–0.98) was higher than on correct OPERATIVE classifications, so a confidence threshold could not rescue the gate.
 - Prompt re-authored as `paragraph_classifier.v3.md`; v1 and v2 retained per §3.5.
+- Follow-on observability (no contract change; appended rather than 2.3.1 because tightly coupled to the same diagnostic arc):
+  - `audit/recorder.py`: structlog emission now includes `payload` so per-call counters (`accepted`, `rejected`, etc.) reach the run log. Previously dropped on the floor — surfaced when investigating why the directive extractor silently produced zero directives on the v3 run.
+  - `extraction/pipeline.py` (`extract_directions`): per-item rejection at the anchor and span checks now emits a structured `operative_direction_rejected` warning (reason, paragraph_id, anchor, truncated source_span). Rejection behavior unchanged.
+  - `tests/integration/test_apvc_pipeline.py`: positive lower-bound assertion added — every paragraph in the fixture's `operative_direction_paragraph_indices` must produce at least one directive. The negative leak assertion stays. Catches silent-zero regressions that previously passed.
 
 **Changelog (2.1.0 → 2.2.0):**
 - §9 (catalogue): replaced the implicit 6-value `ParagraphLabel` (facts/arguments/reasoning/precedent/operative/decree) with the explicit 3-value operational taxonomy (`OPERATIVE`/`CONTEXTUAL`/`PROCEDURAL`); added `Verdict` enum entry that was previously implicit.

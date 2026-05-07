@@ -93,6 +93,14 @@ def test_apvc_pipeline_meets_accuracy_gate(
         }
         for idx in sorted(expected_labels)
     ]
+    operative_direction_paragraph_ids: list[str] = []
+    seen_direction_paragraphs: set[UUID] = set()
+    for d in result.operative_directions:
+        if d.paragraph_id in seen_direction_paragraphs:
+            continue
+        seen_direction_paragraphs.add(d.paragraph_id)
+        operative_direction_paragraph_ids.append(str(d.paragraph_id))
+
     debug_path = Path(__file__).resolve().parent.parent.parent / "_debug_extraction.json"
     debug_path.write_text(
         json.dumps(
@@ -104,6 +112,7 @@ def test_apvc_pipeline_meets_accuracy_gate(
                 "verdict_actual": result.verdict.verdict.value,
                 "verdict_expected": expected["verdict"],
                 "operative_direction_count": len(result.operative_directions),
+                "operative_direction_paragraph_ids": operative_direction_paragraph_ids,
                 "paragraph_breakdown": breakdown,
             },
             indent=2,
@@ -140,6 +149,31 @@ def test_apvc_pipeline_meets_accuracy_gate(
     assert not leaked, (
         f"operative extractor leaked from past-tense paragraphs: "
         f"{[str(d.paragraph_id) for d in leaked]}"
+    )
+
+    # 3b. Directives ARE extracted from every paragraph the fixture marks as
+    # an expected source. Catches the silent-zero failure mode where the
+    # extractor produces nothing and the pipeline reports success.
+    expected_source_indices: set[int] = set(
+        expected["operative_direction_paragraph_indices"]
+    )
+    paragraph_id_by_index = {p.paragraph_index: p.id for p in paragraphs}
+    expected_source_ids: set[UUID] = {
+        paragraph_id_by_index[idx] for idx in expected_source_indices
+    }
+    produced_source_ids: set[UUID] = {
+        d.paragraph_id for d in result.operative_directions
+    }
+    missing_source_ids = expected_source_ids - produced_source_ids
+    missing_indices = sorted(
+        idx
+        for idx, pid in paragraph_id_by_index.items()
+        if pid in missing_source_ids
+    )
+    assert not missing_source_ids, (
+        f"operative extractor produced no directive for expected paragraphs: "
+        f"{missing_indices} (expected sources: {sorted(expected_source_indices)}, "
+        f"actual count: {len(result.operative_directions)})"
     )
 
     # 4. Audit invariants

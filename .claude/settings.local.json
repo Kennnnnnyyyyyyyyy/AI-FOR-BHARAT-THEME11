@@ -3,7 +3,12 @@
     "allow": [
       "Bash(python *)",
       "Bash(.venv/bin/python -m pytest tests/unit -q)",
-      "Bash(.venv/bin/mypy kartavya/extraction kartavya/schemas kartavya/audit kartavya/errors.py)"
+      "Bash(.venv/bin/mypy kartavya/extraction kartavya/schemas kartavya/audit kartavya/errors.py)",
+      "Read(//tmp/**)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_apvc_pipeline.py -m live_ollama -q -s)",
+      "Bash(tee /tmp/apvc_run_observe.log)",
+      "Bash(.venv/bin/ruff check *)",
+      "Bash(tee /tmp/apvc_run_extractor_v2.log)"
     ]
   }
 }

@@ -5,7 +5,12 @@
   "total": 24,
   "verdict_actual": "dismissed",
   "verdict_expected": "dismissed",
-  "operative_direction_count": 0,
+  "operative_direction_count": 3,
+  "operative_direction_paragraph_ids": [
+    "00000000-0000-0000-0000-000000000020",
+    "00000000-0000-0000-0000-000000000021",
+    "00000000-0000-0000-0000-000000000022"
+  ],
   "paragraph_breakdown": [
     {
       "paragraph_index": 0,

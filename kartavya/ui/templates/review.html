@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Kartavya — Judgment Review</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
+  <script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+  <style>
+    .pdf-canvas { box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <div x-data="reviewApp()" x-init="init()" class="h-screen flex flex-col">
+
+    <header class="bg-white border-b px-6 py-3 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded bg-indigo-600 text-white grid place-items-center font-bold">क</div>
+        <div>
+          <div class="text-base font-semibold leading-tight">Kartavya</div>
+          <div class="text-xs text-slate-500 leading-tight">Compliance-operations layer · Karnataka High Court</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-slate-400">Demo case:</span>
+        <select @change="load($event.target.value)" x-model="currentSlug"
+                class="border border-slate-300 rounded px-3 py-1.5 text-sm bg-white">
+          <template x-for="c in cases" :key="c.slug">
+            <option :value="c.slug" x-text="c.label"></option>
+          </template>
+        </select>
+      </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden">
+
+      <div class="w-1/2 border-r overflow-y-auto bg-slate-200" id="pdf-pane">
+        <div class="p-4 text-slate-500 text-sm">Loading PDF…</div>
+      </div>
+
+      <div class="w-1/2 overflow-y-auto bg-slate-50">
+        <template x-if="!plan">
+          <div class="p-6 text-slate-500 text-sm">Running pipeline…</div>
+        </template>
+
+        <template x-if="plan">
+          <div class="p-6 space-y-4">
+
+            <div class="bg-white border rounded-lg p-4">
+              <div class="flex items-center justify-between mb-1">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Case</div>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600"
+                      x-text="'engine v' + plan.engine_version"></span>
+              </div>
+              <div class="text-lg font-semibold" x-text="plan.case_number"></div>
+              <div class="text-sm text-slate-600" x-text="plan.court"></div>
+              <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+                <div><span class="text-slate-500">Judgment date:</span> <span class="font-medium" x-text="plan.judgment_date"></span></div>
+                <div>
+                  <span class="text-slate-500">Verdict:</span>
+                  <span class="font-medium"
+                        :class="plan.verdict_class === 'DISMISSED' ? 'text-rose-600' : 'text-emerald-700'"
+                        x-text="plan.verdict_class"></span>
+                </div>
+                <div><span class="text-slate-500">Petitioner:</span> <span x-text="plan.petitioner"></span></div>
+                <div><span class="text-slate-500">Today:</span> <span x-text="plan.today"></span></div>
+              </div>
+              <details class="mt-3 text-xs">
+                <summary class="text-indigo-600 cursor-pointer">show respondents (<span x-text="plan.respondents.length"></span>)</summary>
+                <ol class="mt-2 ml-5 list-decimal text-slate-700 space-y-1">
+                  <template x-for="r in plan.respondents" :key="r.no">
+                    <li><span class="font-mono text-slate-400" x-text="'R' + r.no"></span> · <span x-text="r.designation"></span></li>
+                  </template>
+                </ol>
+              </details>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold">Action plan</h2>
+              <span class="text-sm text-slate-500">
+                <span x-text="plan.actions.length"></span> item<span x-text="plan.actions.length === 1 ? '' : 's'"></span>
+              </span>
+            </div>
+
+            <template x-if="plan.actions.length === 0">
+              <div class="bg-white border border-dashed rounded-lg p-6 text-sm text-slate-500 text-center">
+                No actions emitted by the rules engine.
+              </div>
+            </template>
+
+            <template x-for="(a, idx) in plan.actions" :key="idx">
+              <div class="bg-white border rounded-lg shadow-sm">
+                <div class="p-4 border-b">
+                  <div class="flex items-center gap-2 mb-2 flex-wrap">
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded uppercase tracking-wide"
+                          :class="a.kind === 'DEFENSIVE_MONITOR'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : a.kind === 'ACTIVE_OBLIGATION'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-slate-100 text-slate-700'"
+                          x-text="a.kind"></span>
+                    <template x-if="a.deadline">
+                      <span class="text-xs text-slate-600">
+                        deadline <span class="font-medium" x-text="a.deadline"></span>
+                        <span class="text-slate-400" x-text="'(' + (a.days_from_today === 0 ? 'today' : (a.days_from_today < 0 ? 'OVERDUE by ' + (-a.days_from_today) + ' days' : 'in ' + a.days_from_today + ' days')) + ')'"></span>
+                      </span>
+                    </template>
+                    <template x-if="!a.deadline">
+                      <span class="text-xs text-slate-400 italic">open-ended</span>
+                    </template>
+                  </div>
+                  <div class="text-sm font-semibold text-slate-800" x-text="a.title"></div>
+                </div>
+                <div class="px-4 py-3 text-xs text-slate-600 space-y-1.5">
+                  <div><span class="text-slate-400 inline-block w-20">Target</span><span x-text="a.target"></span></div>
+                  <div><span class="text-slate-400 inline-block w-20">Rule</span><span class="font-mono" x-text="a.rule_id"></span> <span class="text-slate-400" x-text="'v' + a.rule_version"></span></div>
+                  <div><span class="text-slate-400 inline-block w-20">Statute</span><span x-text="a.statute"></span></div>
+                  <template x-if="a.source_paragraph_index !== null">
+                    <div><span class="text-slate-400 inline-block w-20">Source</span>paragraph <span class="font-mono" x-text="a.source_paragraph_index"></span></div>
+                  </template>
+                </div>
+                <template x-if="a.source_text">
+                  <details class="border-t bg-slate-50 px-4 py-2 text-xs group">
+                    <summary class="text-indigo-600 cursor-pointer select-none">view source paragraph</summary>
+                    <div class="mt-2 p-3 bg-white border rounded text-slate-700 whitespace-pre-wrap leading-relaxed" x-text="a.source_text"></div>
+                  </details>
+                </template>
+              </div>
+            </template>
+
+            <template x-if="plan.errors && plan.errors.length">
+              <div class="bg-rose-50 border border-rose-200 rounded p-3 text-sm text-rose-800">
+                <div class="font-semibold mb-1">Validation errors — plan would be routed to human review</div>
+                <ul class="list-disc ml-5">
+                  <template x-for="e in plan.errors" :key="e[0] + ':' + e[1]">
+                    <li><span class="font-mono" x-text="e[0]"></span> — <span x-text="e[1]"></span></li>
+                  </template>
+                </ul>
+              </div>
+            </template>
+
+            <div class="text-[11px] text-slate-400 pt-2 border-t">
+              Staff assistance only · LLM never computes deadlines · officer always decides
+            </div>
+
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function reviewApp() {
+      return {
+        cases: {{ cases | tojson }},
+        plan: null,
+        currentSlug: null,
+        async init() {
+          if (this.cases.length) {
+            this.currentSlug = this.cases[0].slug;
+            await this.load(this.currentSlug);
+          }
+        },
+        async load(slug) {
+          this.currentSlug = slug;
+          this.plan = null;
+          this.renderPdf(slug);
+          const r = await fetch('/api/plan/' + slug);
+          if (!r.ok) {
+            this.plan = { error: 'failed to load plan' };
+            return;
+          }
+          this.plan = await r.json();
+        },
+        async renderPdf(slug) {
+          const pane = document.getElementById('pdf-pane');
+          pane.innerHTML = '<div class="p-4 text-slate-500 text-sm">Loading PDF…</div>';
+          try {
+            const pdf = await pdfjsLib.getDocument('/pdf/' + slug).promise;
+            pane.innerHTML = '';
+            const inner = document.createElement('div');
+            inner.className = 'p-4 space-y-3';
+            pane.appendChild(inner);
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const viewport = page.getViewport({ scale: 1.25 });
+              const canvas = document.createElement('canvas');
+              canvas.className = 'pdf-canvas bg-white mx-auto block rounded';
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+              inner.appendChild(canvas);
+              await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            }
+          } catch (err) {
+            pane.innerHTML = '<div class="p-4 text-rose-600 text-sm">Failed to load PDF: ' + err.message + '</div>';
+          }
+        },
+      };
+    }
+  </script>
+</body>
+</html>

@@ -19,7 +19,9 @@
       "Bash(.venv/bin/mypy kartavya/extraction kartavya/schemas kartavya/audit kartavya/errors.py kartavya/rules_engine kartavya/responsibility kartavya/ingestion)",
       "Bash(.venv/bin/pip list *)",
       "Bash(make demo-venkateshulu *)",
-      "Bash(apt list *)"
+      "Bash(apt list *)",
+      "Bash(awk '/^class Action\\\\\\(/,/^class [A-Z]|^# /' kartavya/schemas/action_plan.py)",
+      "Bash(.venv/bin/uvicorn kartavya.main:app *)"
     ]
   }
 }

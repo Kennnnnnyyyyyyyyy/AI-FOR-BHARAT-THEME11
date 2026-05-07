@@ -1,0 +1,35 @@
+{
+  "_comment": "Ground truth for the cause-title parser on the real Venkateshulu PDF. Designation strings match the Phase A stub in tests/fixtures/venkateshulu_stub.py exactly. Address fields are not asserted in tests; the parser produces them but they are PDF-formatting-dependent and not part of the contract.",
+  "respondents": [
+    {
+      "respondent_no": 1,
+      "designation": "Secretary, Ministry of Mines",
+      "organization": "Government of India"
+    },
+    {
+      "respondent_no": 2,
+      "designation": "Joint Secretary, Ministry of Mines",
+      "organization": "Government of India"
+    },
+    {
+      "respondent_no": 3,
+      "designation": "Principal Secretary to Government, Commerce and Industries Department (MSME and Mines)",
+      "organization": "Government of Karnataka"
+    },
+    {
+      "respondent_no": 4,
+      "designation": "Secretary II (Mines), Commerce and Industries Department",
+      "organization": "Government of Karnataka"
+    },
+    {
+      "respondent_no": 5,
+      "designation": "Director (Mines), Department of Mines and Geology",
+      "organization": "Government of Karnataka"
+    },
+    {
+      "respondent_no": 6,
+      "designation": "Senior Geologist, Department of Mines and Geology",
+      "organization": "Government of Karnataka"
+    }
+  ]
+}

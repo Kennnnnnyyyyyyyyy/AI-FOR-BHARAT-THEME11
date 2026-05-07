@@ -24,6 +24,7 @@ to the legacy field. Legacy field is marked deprecated; remove in 0.3.0.
 designation, never a person name) hold for both paths.
 """
 
+import warnings
 from datetime import date, datetime
 from enum import Enum
 from typing import Any, Literal, Optional, Union
@@ -66,11 +67,14 @@ class ActionItem(BaseModel):
 
 
 class LegacyActionPlan(BaseModel):
-    """Legacy plan shape, returned by `generate_action_plan(...)`.
+    """DEPRECATED: legacy 0.1.0 plan shape, returned by
+    `generate_action_plan(...)`.
 
     Was named `ActionPlan` in 0.1.0; renamed in Phase A to free the canonical
-    name for the new shape. Database rows persisted under the old name remain
-    structurally compatible with this class.
+    name for the new shape. Use `ActionPlan` (Phase A 0.2.0+ canonical) for
+    all new code. Removal scheduled for 0.4.0. Database rows persisted under
+    the old name remain structurally compatible with this class for the
+    migration window.
     """
 
     id: UUID
@@ -78,6 +82,15 @@ class LegacyActionPlan(BaseModel):
     action_items: list[ActionItem]
     rule_engine_version: str
     generated_at: datetime
+
+    def __init__(self, **data: Any) -> None:
+        warnings.warn(
+            "LegacyActionPlan is deprecated. Use ActionPlan "
+            "(kartavya.schemas.action_plan). Removal in 0.4.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
 
 
 # ---- New 0.2.0 types (canonical Phase A) ------------------------------------

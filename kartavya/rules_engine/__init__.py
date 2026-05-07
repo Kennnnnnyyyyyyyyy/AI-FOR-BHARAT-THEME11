@@ -10,7 +10,7 @@ the minor digit on rule additions / changes; the patch digit on engine
 code changes that don't change rule semantics.
 """
 
-RULE_ENGINE_VERSION = "0.2.0"
+RULE_ENGINE_VERSION = "0.3.0"
 
 from kartavya.rules_engine.engine import (  # noqa: E402
     generate_action_plan,

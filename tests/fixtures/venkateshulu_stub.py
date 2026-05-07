@@ -88,7 +88,7 @@ VENKATESHULU_STUB = ParsedJudgment(
 
 EXPECTED_PLAN = ActionPlan(
     case_number="WP 13296/2022",
-    rule_engine_version="0.2.0",
+    rule_engine_version="0.3.0",
     actions=[
         Action(
             kind="DEFENSIVE_MONITOR",
@@ -101,7 +101,7 @@ EXPECTED_PLAN = ActionPlan(
             deadline=date(2026, 7, 16),
             target_role_id="PRIMARY_STATE_RESPONDENT",
             rule_id="dismissed_slp_window",
-            rule_version="0.2.0",
+            rule_version="0.3.0",
             statute_citation=(
                 "Article 136, Constitution of India; "
                 "Limitation Act, 1963, Article 133"

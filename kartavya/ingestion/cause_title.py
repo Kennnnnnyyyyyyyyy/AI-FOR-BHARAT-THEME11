@@ -166,22 +166,59 @@ def _extract_text_until_body(pdf_path: Path) -> str:
     return full  # downstream parsers will raise if a field is missing
 
 
+_SIG_MARKER_RE = re.compile(
+    r"digitally|signed|location:|nirmala\s+devi", re.IGNORECASE
+)
+
+
+def _has_signature_in_bbox(words: list[dict]) -> bool:
+    """Return True iff any word inside the signature bbox carries a marker
+    that proves it is part of a digital-signature column.
+
+    The Venkateshulu PDF (Indian Kanoon rendering) has the signature column
+    interleaved with respondent text and must be stripped. Other PDFs may
+    have no signature column at all, in which case the bbox is just empty
+    space and stripping it does nothing harmful — UNLESS the PDF happens
+    to put body text there (left-margin numbered prefixes like "2.", "3."),
+    in which case unconditional stripping eats those prefixes and the
+    respondent splitter then merges all respondents into R1.
+    """
+    for w in words:
+        x0 = float(w["x0"])
+        top = float(w["top"])
+        if x0 >= _SIG_BBOX_X0_MAX:
+            continue
+        if not (_SIG_BBOX_TOP_MIN < top < _SIG_BBOX_TOP_MAX):
+            continue
+        if _SIG_MARKER_RE.search(w["text"]):
+            return True
+    return False
+
+
 def _text_without_signature_bbox(page: object) -> str:
     """Reconstruct page text from words that are NOT in the signature bbox.
 
     Words are sorted by (top, x0) so the reconstructed text follows the
     visual reading order; line breaks are inserted whenever the `top`
     value changes meaningfully (more than 3 points).
+
+    The bbox filter runs only when a digital-signature marker
+    ("Digitally signed by", "Location:", etc.) is detected inside the
+    bbox — otherwise the bbox is just left-margin body text (numbered
+    prefixes, indentation) and stripping it would corrupt the respondent
+    splitter's input.
     """
     words = page.extract_words()  # type: ignore[attr-defined]
+    strip_bbox = _has_signature_in_bbox(words)
     keep: list[dict] = []
     for w in words:
-        x0 = float(w["x0"])
-        top = float(w["top"])
-        in_sig_x = x0 < _SIG_BBOX_X0_MAX
-        in_sig_y = _SIG_BBOX_TOP_MIN < top < _SIG_BBOX_TOP_MAX
-        if in_sig_x and in_sig_y:
-            continue
+        if strip_bbox:
+            x0 = float(w["x0"])
+            top = float(w["top"])
+            in_sig_x = x0 < _SIG_BBOX_X0_MAX
+            in_sig_y = _SIG_BBOX_TOP_MIN < top < _SIG_BBOX_TOP_MAX
+            if in_sig_x and in_sig_y:
+                continue
         keep.append(w)
     keep.sort(key=lambda w: (round(float(w["top"]), 1), float(w["x0"])))
     lines: list[list[str]] = []

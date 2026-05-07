@@ -51,7 +51,7 @@ from kartavya.schemas.action_plan import (
 from kartavya.schemas.case import CaseMetadata
 from kartavya.schemas.extraction import ExtractionResult, OperativeDirection
 from kartavya.schemas.paragraph import Paragraph
-from kartavya.schemas.parsed_judgment import ParsedJudgment
+from kartavya.schemas.parsed_judgment import OperativeDirective, ParsedJudgment
 
 _TABLE_DIR = Path(__file__).parent / "tables"
 _SLP_TABLE = _TABLE_DIR / "slp_window.yaml"
@@ -448,14 +448,118 @@ def generate_actions(case: ParsedJudgment, today: date) -> ActionPlan:
             actions=actions,
         )
 
-    # Phase A: directive rules registry is empty; Phase B populates it.
-    # Emitting nothing here is the correct conservative behavior. Any plan
-    # built from a non-empty directives list will go through the validators
-    # in rules_engine.validators, which flag the contradiction.
+    for source_directive_id, directive in enumerate(case.directives):
+        action = _directive_action_in_case(
+            directive,
+            case.judgment_date,
+            source_directive_id=source_directive_id,
+        )
+        if action is not None:
+            actions.append(action)
+
     return ActionPlan(
         case_number=case.case_number,
         rule_engine_version=RULE_ENGINE_VERSION,
         actions=actions,
+    )
+
+
+# Phase B5: directive-driven ACTIVE_OBLIGATION emission ----------------------
+#
+# The verdict-gated branch above handles cases without directives (pure
+# dismissal -> SLP monitor; allowed-without-directions -> human review).
+# When `case.directives` is non-empty, every directive that the parser
+# successfully grounded (Phase B4 filtered it through three guards already)
+# becomes one ACTIVE_OBLIGATION action, with deadline computed from the
+# directive's `time_clause` if present, or `None` if the court issued an
+# open-ended direction.
+#
+# Day-count conversion is calendar-day arithmetic per §10.2 ("calendar-day
+# arithmetic for now; working-day handling deferred to Round 2").
+
+_DAYS_PER_UNIT: dict[str, int] = {
+    "DAYS": 1,
+    "WEEKS": 7,
+    "MONTHS": 30,
+    "YEARS": 365,
+}
+
+_DIRECTIVE_RULE_ID_BY_UNIT: dict[str, str] = {
+    "DAYS": "directive_relative_deadline:within_n_days",
+    "WEEKS": "directive_relative_deadline:within_n_weeks",
+    "MONTHS": "directive_relative_deadline:within_n_months",
+    "YEARS": "directive_relative_deadline:within_n_years",
+}
+
+
+def _build_active_obligation(
+    directive: OperativeDirective,
+    *,
+    deadline: date | None,
+    rule_id: str,
+    source_directive_id: int,
+) -> Action:
+    title = _directive_title(directive)
+    return Action(
+        kind="ACTIVE_OBLIGATION",
+        title=title,
+        description=directive.verbatim_text,
+        deadline=deadline,
+        target_role_id=directive.actor_resolved,
+        rule_id=rule_id,
+        rule_version=RULE_ENGINE_VERSION,
+        statute_citation=(
+            f"Operative direction in paragraph {directive.paragraph_index} "
+            "(Article 226, Constitution of India)"
+        ),
+        source_directive_id=source_directive_id,
+        source_paragraph_index=directive.paragraph_index,
+    )
+
+
+def _directive_title(directive: OperativeDirective) -> str:
+    """Short human-readable title from the directive verbatim text.
+
+    v0.1: take the substring up to the first sentence-ending period or the
+    first 100 characters, whichever is shorter, and strip trailing
+    whitespace and punctuation. Refining to extract just the action
+    sub-span ("complete field verification") is a Phase B6 task.
+    """
+    text = directive.verbatim_text.strip()
+    head = text.split(".")[0].strip()
+    if len(head) > 100:
+        head = head[:100].rstrip() + "..."
+    return head.rstrip(".,; ")
+
+
+def _directive_action_in_case(
+    directive: OperativeDirective,
+    judgment_date: date,
+    *,
+    source_directive_id: int,
+) -> Action | None:
+    """Case-aware directive -> Action conversion. `source_directive_id` is the
+    directive's index in `case.directives`; the validator requires it to be
+    non-None on ACTIVE_OBLIGATION actions."""
+    if directive.time_clause is None:
+        return _build_active_obligation(
+            directive,
+            deadline=None,
+            rule_id="directive_no_time_clause",
+            source_directive_id=source_directive_id,
+        )
+    unit = directive.time_clause.unit
+    days_per_unit = _DAYS_PER_UNIT.get(unit)
+    if days_per_unit is None:
+        return None
+    deadline = judgment_date + timedelta(
+        days=directive.time_clause.quantity * days_per_unit
+    )
+    return _build_active_obligation(
+        directive,
+        deadline=deadline,
+        rule_id=_DIRECTIVE_RULE_ID_BY_UNIT[unit],
+        source_directive_id=source_directive_id,
     )
 
 

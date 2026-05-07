@@ -1,5 +1,15 @@
-"""Extraction outputs — paragraph classifications, verdict, operative directions, and aggregate result."""
+"""Extraction outputs — paragraph classifications, verdict, operative directions, and aggregate result.
 
+Phase B7 status: `OperativeDirection` (without the trailing 'e') is the
+legacy 0.1.0 directive type. It coexisted with `OperativeDirective` (in
+schemas/parsed_judgment.py) through Phase B for backwards compatibility
+with the v3 prompt path. As of 0.3.0, runtime call sites all consume
+`OperativeDirective`; `OperativeDirection` is retained on disk per §3.5
+(prompt files reference it by name) and is scheduled for removal in
+0.4.0. Importing it now emits a DeprecationWarning.
+"""
+
+import warnings
 from datetime import datetime
 from enum import Enum
 from uuid import UUID
@@ -50,12 +60,30 @@ class VerdictClassification(BaseModel):
 
 
 class OperativeDirection(BaseModel):
+    """DEPRECATED: legacy 0.1.0 directive shape.
+
+    Use `kartavya.schemas.parsed_judgment.OperativeDirective` instead.
+    Removal scheduled for 0.4.0. Retained on disk per §3.5 because the
+    v3 prompt files still reference this class by name in their
+    frontmatter; the v3 path is no longer dispatched at runtime but the
+    files are part of the reproducibility chain.
+    """
+
     id: UUID
     paragraph_id: UUID
     text: str
     source_span: str
     confidence: float = Field(ge=0.0, le=1.0)
     provenance: ExtractionProvenance
+
+    def __init__(self, **data: object) -> None:
+        warnings.warn(
+            "OperativeDirection is deprecated. Use OperativeDirective "
+            "(kartavya.schemas.parsed_judgment). Removal in 0.4.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(**data)
 
 
 class ExtractionResult(BaseModel):

@@ -16,7 +16,10 @@
       "Bash(.venv/bin/mypy kartavya/extraction kartavya/schemas kartavya/audit kartavya/errors.py kartavya/rules_engine kartavya/responsibility)",
       "Bash(awk '{print $2}')",
       "Bash(xargs -r ls -la)",
-      "Bash(.venv/bin/mypy kartavya/extraction kartavya/schemas kartavya/audit kartavya/errors.py kartavya/rules_engine kartavya/responsibility kartavya/ingestion)"
+      "Bash(.venv/bin/mypy kartavya/extraction kartavya/schemas kartavya/audit kartavya/errors.py kartavya/rules_engine kartavya/responsibility kartavya/ingestion)",
+      "Bash(.venv/bin/pip list *)",
+      "Bash(make demo-venkateshulu *)",
+      "Bash(apt list *)"
     ]
   }
 }

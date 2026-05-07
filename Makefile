@@ -1,16 +1,18 @@
-.PHONY: help bootstrap dev test lint format clean docker-up docker-down
+.PHONY: help bootstrap dev test lint format clean docker-up docker-down demo-venkateshulu demo-positive
 
 help:
 	@echo "Kartavya Development Commands"
 	@echo "=============================="
-	@echo "  make bootstrap    Install deps & init environment"
-	@echo "  make dev          Run FastAPI dev server"
-	@echo "  make test         Run tests"
-	@echo "  make lint         Lint code"
-	@echo "  make format       Format code"
-	@echo "  make docker-up    Start services"
-	@echo "  make docker-down  Stop services"
-	@echo "  make clean        Clean cache"
+	@echo "  make bootstrap         Install deps & init environment"
+	@echo "  make dev               Run FastAPI dev server"
+	@echo "  make test              Run tests"
+	@echo "  make lint              Lint code"
+	@echo "  make format            Format code"
+	@echo "  make docker-up         Start services"
+	@echo "  make docker-down       Stop services"
+	@echo "  make demo-venkateshulu Run CLI on Venkateshulu (negative case, dry-run)"
+	@echo "  make demo-positive     Run CLI on synthetic positive case (dry-run)"
+	@echo "  make clean             Clean cache"
 
 bootstrap:
 	python3 -m venv .venv
@@ -48,5 +50,15 @@ clean:
 	find . -type f -name "*.pyc" -delete
 	rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov/
 	@echo "✅ Cleaned"
+
+demo-venkateshulu:
+	.venv/bin/python -m kartavya.cli.run \
+	    tests/fixtures/venkateshulu_real_pdf_wp13296_2022/original.pdf \
+	    --dry-run --today 2026-05-07
+
+demo-positive:
+	.venv/bin/python -m kartavya.cli.run \
+	    tests/fixtures/synthetic_disposed_with_directions/judgment.pdf \
+	    --dry-run --demo-positive --today 2026-03-15
 
 .SILENT: help

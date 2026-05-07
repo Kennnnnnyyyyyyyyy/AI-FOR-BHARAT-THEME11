@@ -147,6 +147,15 @@ _CONTENTION_OPENER = re.compile(
     re.IGNORECASE,
 )
 
+# Directive-issuance language. Catches "is directed to", "are directed to",
+# "is hereby directed to" anywhere in a paragraph. The directive-issuance
+# OPERATIVE rule pairs this with `is_last_body_paragraph` to avoid catching
+# REASONING paragraphs that happen to mention a directive obliquely.
+_DIRECTIVE_ISSUANCE_RE = re.compile(
+    r"\b(?:is|are)\s+(?:hereby\s+)?directed\s+to\b",
+    re.IGNORECASE,
+)
+
 
 # Feature extraction ----------------------------------------------------------
 
@@ -228,6 +237,18 @@ def classify_deterministic(f: SectionFeatures) -> SectionVerdict:
         and f.is_last_body_paragraph
     ):
         return SectionVerdict("OPERATIVE", 0.92, "cue+decree+last")
+
+    # OPERATIVE: directive-issuing paragraph at the end of the body. Catches
+    # "disposed with directions" judgments where the operative paragraph has
+    # no decree verb (no "dismissed/allowed") but lists directions to
+    # respondents. Pure court voice + last body paragraph isolate this from
+    # REASONING paragraphs that mention directives obliquely.
+    if (
+        _DIRECTIVE_ISSUANCE_RE.search(f.text)
+        and f.court_voice_ratio >= 0.95
+        and f.is_last_body_paragraph
+    ):
+        return SectionVerdict("OPERATIVE", 0.95, "directive-issuance-last")
 
     if f.starts_with_argument_cue:
         return SectionVerdict("ARGUMENTS", 0.97, "contention-opener")

@@ -2,7 +2,7 @@
 
 Compliance-operations layer over the Karnataka High Court CCMS. Converts disposed-judgment PDFs into deadline-bound, role-targeted action plans for government officers.
 
-**Live demo:** _\<paste your Vercel URL here once deployed\>_
+**Live demo:** https://ai-for-bharat-theme-11.vercel.app/
 
 ---
 

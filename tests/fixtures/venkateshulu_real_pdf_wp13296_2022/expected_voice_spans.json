@@ -1,0 +1,62 @@
+{
+  "_comment": "Expected voice spans for the real Venkateshulu PDF. Substring-keyed so the resolver maps to character offsets at runtime; offsets drift if segmentation normalization changes, substrings do not. Built by running segmentation + voice tagger on tests/fixtures/venkateshulu_real_pdf_wp13296_2022/original.pdf.",
+  "9": [
+    {
+      "voice": "PARTY_CONTENTION",
+      "starts_with": "It is further contented that the finding that the lease",
+      "ends_with": "granting of the reliefs sought for."
+    }
+  ],
+  "11": [
+    {
+      "voice": "SUPREME_COURT_QUOTE",
+      "starts_with": "\"39. We make it clear",
+      "ends_with": "by any body or authority.\""
+    }
+  ],
+  "13": [
+    {
+      "voice": "OTHER_COURT_QUOTE",
+      "starts_with": "\"In substance, the prayer",
+      "ends_with": "Petition is therefore rejected.\""
+    }
+  ],
+  "17": [
+    {
+      "voice": "STATUTE_QUOTE",
+      "starts_with": "Section 4A(4) of the MMDR Act stipulates that",
+      "ends_with": "expiry of the said period of two years."
+    }
+  ],
+  "18": [
+    {
+      "voice": "STATUTE_QUOTE",
+      "starts_with": "Section 8A(3) of the MMDR Act stipulates that",
+      "ends_with": "for a period of fifty years."
+    },
+    {
+      "voice": "STATUTE_QUOTE",
+      "starts_with": "Section 8A(6) of the MMDR Act states that",
+      "ends_with": "have been complied with."
+    },
+    {
+      "voice": "STATUTE_QUOTE",
+      "starts_with": "Section 8A(9) of the MMDR Act stipulates that",
+      "ends_with": "has been determined or lapsed."
+    }
+  ],
+  "20": [
+    {
+      "voice": "SUPREME_COURT_QUOTE",
+      "starts_with": "\" 37. Based on the considerations",
+      "ends_with": "amended MMDR Act.\""
+    }
+  ],
+  "21": [
+    {
+      "voice": "REVISIONAL_AUTHORITY_QUOTE",
+      "starts_with": "\"45.",
+      "ends_with": "since 18.04.2013.\""
+    }
+  ]
+}

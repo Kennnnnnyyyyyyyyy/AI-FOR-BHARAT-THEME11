@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from collections import Counter
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -69,6 +70,16 @@ CASES: dict[str, dict[str, Any]] = {
 
 _PLAN_CACHE: dict[str, dict[str, Any]] = {}
 
+# Mirror of kartavya.rules_engine.engine._DAYS_PER_UNIT (calendar-day arithmetic
+# per CLAUDE.md §10.2). Engine constant is module-private; copying the four
+# entries is safer than importing it.
+_DAYS_PER_UNIT: dict[str, int] = {
+    "DAYS": 1,
+    "WEEKS": 7,
+    "MONTHS": 30,
+    "YEARS": 365,
+}
+
 
 def _build_plan(case_slug: str) -> dict[str, Any]:
     if case_slug in _PLAN_CACHE:
@@ -105,11 +116,85 @@ def _build_plan(case_slug: str) -> dict[str, Any]:
         target = _resolve_target(a.target_role_id, case)
         delta = (a.deadline - cfg["today"]).days if a.deadline else None
         source_text = None
+        source_voice_spans: list[dict[str, Any]] = []
         if a.source_paragraph_index is not None:
             for p in case.paragraphs:
                 if p.paragraph_index == a.source_paragraph_index:
                     source_text = p.text
+                    source_voice_spans = [
+                        {
+                            "start": s.char_start,
+                            "end": s.char_end,
+                            "voice": s.voice,
+                        }
+                        for s in p.voice_spans
+                    ]
                     break
+
+        verbatim_text: str | None = None
+        verbatim_char_span: list[int] | None = None
+        computation_trace: dict[str, Any]
+
+        if a.source_directive_id is not None and 0 <= a.source_directive_id < len(
+            case.directives
+        ):
+            d = case.directives[a.source_directive_id]
+            verbatim_text = d.verbatim_text
+            verbatim_char_span = list(d.char_span)
+            if d.time_clause is not None:
+                unit = d.time_clause.unit
+                qty = d.time_clause.quantity
+                days_per_unit = _DAYS_PER_UNIT[unit]
+                deadline_str = (
+                    a.deadline.isoformat() if a.deadline else "(no deadline)"
+                )
+                computation_trace = {
+                    "kind": "directive",
+                    "verbatim_text": d.verbatim_text,
+                    "char_span": list(d.char_span),
+                    "time_clause": {
+                        "raw": d.time_clause.raw,
+                        "unit": unit,
+                        "quantity": qty,
+                    },
+                    "computation": (
+                        f"{case.judgment_date.isoformat()} + "
+                        f"{qty} × {days_per_unit} days = {deadline_str}"
+                    ),
+                    "rule_id": a.rule_id,
+                    "rule_version": a.rule_version,
+                    "statute": a.statute_citation,
+                }
+            else:
+                computation_trace = {
+                    "kind": "directive",
+                    "open_ended": True,
+                    "verbatim_text": d.verbatim_text,
+                    "char_span": list(d.char_span),
+                    "computation": "open-ended directive — flagged for officer review",
+                    "rule_id": a.rule_id,
+                    "rule_version": a.rule_version,
+                    "statute": a.statute_citation,
+                }
+        else:
+            if a.deadline is not None:
+                window_days = (a.deadline - case.judgment_date).days
+                computation = (
+                    f"{case.judgment_date.isoformat()} + {window_days} days "
+                    f"= {a.deadline.isoformat()}"
+                )
+            else:
+                computation = "no deadline (ongoing monitoring / human review)"
+            computation_trace = {
+                "kind": "verdict",
+                "verdict_class": case.verdict_class,
+                "judgment_date": case.judgment_date.isoformat(),
+                "computation": computation,
+                "rule_id": a.rule_id,
+                "rule_version": a.rule_version,
+                "statute": a.statute_citation,
+            }
+
         actions_view.append(
             {
                 "kind": a.kind,
@@ -123,8 +208,16 @@ def _build_plan(case_slug: str) -> dict[str, Any]:
                 "statute": a.statute_citation,
                 "source_paragraph_index": a.source_paragraph_index,
                 "source_text": source_text,
+                "source_voice_spans": source_voice_spans,
+                "verbatim_text": verbatim_text,
+                "verbatim_char_span": verbatim_char_span,
+                "computation_trace": computation_trace,
             }
         )
+
+    paragraph_summary = dict(
+        Counter(p.section_class for p in case.paragraphs)
+    )
 
     result = {
         "case_number": case.case_number,
@@ -132,12 +225,18 @@ def _build_plan(case_slug: str) -> dict[str, Any]:
         "judgment_date": case.judgment_date.isoformat(),
         "petitioner": case.petitioner_name,
         "respondents": [
-            {"no": r.respondent_no, "designation": r.designation}
+            {
+                "no": r.respondent_no,
+                "designation": r.designation,
+                "organization": r.organization,
+            }
             for r in case.respondents
         ],
         "verdict_class": case.verdict_class,
         "engine_version": plan.rule_engine_version,
         "today": cfg["today"].isoformat(),
+        "paragraph_total": len(case.paragraphs),
+        "paragraph_summary": paragraph_summary,
         "actions": actions_view,
         "errors": [
             [code, getattr(action, "title", str(action))] for code, action in errors

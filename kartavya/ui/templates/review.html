@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <title>Kartavya — Judgment Review</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
@@ -12,24 +15,58 @@
   </script>
   <script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
   <style>
-    .pdf-canvas { box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    html, body {
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font-feature-settings: "cv11", "ss01", "ss03";
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-mono, code, pre {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-feature-settings: normal;
+    }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .pdf-canvas { box-shadow: 0 1px 3px rgba(15, 23, 42, .08); }
+    /* Inert keeper so Tailwind Play CDN sees all dynamic urgency classes. */
+    .__keep-tw{display:none}
+    .__keep-tw .bg-rose-500,.__keep-tw .bg-rose-400,.__keep-tw .bg-amber-400,
+    .__keep-tw .bg-sky-400,.__keep-tw .bg-slate-300,.__keep-tw .bg-slate-200,
+    .__keep-tw .bg-rose-50,.__keep-tw .bg-amber-50,.__keep-tw .bg-sky-50,
+    .__keep-tw .bg-slate-50,.__keep-tw .bg-violet-50,.__keep-tw .bg-emerald-50,
+    .__keep-tw .text-rose-700,.__keep-tw .text-rose-600,.__keep-tw .text-amber-700,
+    .__keep-tw .text-sky-700,.__keep-tw .text-slate-700,.__keep-tw .text-slate-500{}
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
+  <!-- Inert keeper: do not remove. Forces Tailwind Play CDN to register
+       every urgency / voice colour we may emit dynamically from JS. -->
+  <div class="__keep-tw">
+    <span class="bg-rose-500 bg-rose-400 bg-amber-400 bg-sky-400 bg-slate-300 bg-slate-200"></span>
+    <span class="bg-rose-50 bg-amber-50 bg-sky-50 bg-slate-50 bg-violet-50 bg-emerald-50 bg-slate-100"></span>
+    <span class="text-rose-700 text-rose-600 text-amber-700 text-sky-700 text-slate-700 text-slate-500"></span>
+    <span class="underline decoration-amber-500 decoration-2 underline-offset-2"></span>
+  </div>
+
   <div x-data="reviewApp()" x-init="init()" class="h-screen flex flex-col">
 
-    <header class="bg-white border-b px-6 py-3 flex items-center justify-between shrink-0">
+    <!-- =================== HEADER =================== -->
+    <header class="bg-white/80 backdrop-blur border-b border-slate-200/70 px-6 py-3 flex items-center justify-between shrink-0 sticky top-0 z-10 shadow-sm">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded bg-indigo-600 text-white grid place-items-center font-bold">क</div>
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 text-white grid place-items-center font-bold text-lg shadow-sm">
+          ಕ
+        </div>
         <div>
-          <div class="text-base font-semibold leading-tight">Kartavya</div>
-          <div class="text-xs text-slate-500 leading-tight">Compliance-operations layer · Karnataka High Court</div>
+          <div class="text-base font-semibold leading-tight tracking-tight">Kartavya</div>
+          <div class="text-[11px] text-slate-500 leading-tight">Compliance-operations layer · Karnataka High Court</div>
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <span class="text-xs text-slate-400">Demo case:</span>
+        <span class="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          Demo mode
+        </span>
+        <span class="text-xs text-slate-400">Case</span>
         <select @change="load($event.target.value)" x-model="currentSlug"
-                class="border border-slate-300 rounded px-3 py-1.5 text-sm bg-white">
+                class="border border-slate-300 rounded-md px-3 py-1.5 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30">
           <template x-for="c in cases" :key="c.slug">
             <option :value="c.slug" x-text="c.label"></option>
           </template>
@@ -39,113 +76,208 @@
 
     <div class="flex-1 flex overflow-hidden">
 
-      <div class="w-1/2 border-r overflow-y-auto bg-slate-200" id="pdf-pane">
+      <!-- =================== LEFT: PDF =================== -->
+      <div class="w-1/2 border-r border-slate-200 overflow-y-auto bg-slate-200/60" id="pdf-pane">
         <div class="p-4 text-slate-500 text-sm">Loading PDF…</div>
       </div>
 
+      <!-- =================== RIGHT: REVIEW =================== -->
       <div class="w-1/2 overflow-y-auto bg-slate-50">
         <template x-if="!plan">
           <div class="p-6 text-slate-500 text-sm">Running pipeline…</div>
         </template>
 
         <template x-if="plan">
-          <div class="p-6 space-y-4">
+          <div class="p-6 space-y-5">
 
-            <div class="bg-white border rounded-lg p-4">
+            <!-- Stats strip -->
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white ring-1 ring-slate-200 text-slate-700">
+                <span class="font-semibold tabular-nums" x-text="plan.actions.length"></span>
+                <span class="text-slate-500">item<span x-text="plan.actions.length === 1 ? '' : 's'"></span></span>
+              </span>
+              <template x-if="stats.dueSoon > 0">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 ring-1 ring-amber-200 text-amber-800">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  <span class="font-semibold tabular-nums" x-text="stats.dueSoon"></span>
+                  due ≤30d
+                </span>
+              </template>
+              <template x-if="stats.overdue > 0">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 ring-1 ring-rose-200 text-rose-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                  <span class="font-semibold tabular-nums" x-text="stats.overdue"></span>
+                  overdue
+                </span>
+              </template>
+              <span class="text-slate-300">·</span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white ring-1 ring-slate-200 text-slate-600"
+                    :title="paragraphSummaryTooltip()">
+                <span class="font-semibold tabular-nums" x-text="plan.paragraph_total"></span>
+                paragraphs ·
+                <span class="font-semibold tabular-nums" x-text="plan.paragraph_summary.OPERATIVE || 0"></span>
+                <span class="font-mono text-[10px] tracking-widest text-slate-500">OPERATIVE</span>
+              </span>
+            </div>
+
+            <!-- Case card -->
+            <div class="bg-white rounded-xl ring-1 ring-slate-200/70 shadow-sm p-5">
               <div class="flex items-center justify-between mb-1">
-                <div class="text-xs uppercase tracking-wide text-slate-500">Case</div>
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                  <span class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Case</span>
+                </div>
                 <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600"
                       x-text="'engine v' + plan.engine_version"></span>
               </div>
-              <div class="text-lg font-semibold" x-text="plan.case_number"></div>
-              <div class="text-sm text-slate-600" x-text="plan.court"></div>
-              <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
-                <div><span class="text-slate-500">Judgment date:</span> <span class="font-medium" x-text="plan.judgment_date"></span></div>
-                <div>
-                  <span class="text-slate-500">Verdict:</span>
-                  <span class="font-medium"
-                        :class="plan.verdict_class === 'DISMISSED' ? 'text-rose-600' : 'text-emerald-700'"
-                        x-text="plan.verdict_class"></span>
-                </div>
-                <div><span class="text-slate-500">Petitioner:</span> <span x-text="plan.petitioner"></span></div>
-                <div><span class="text-slate-500">Today:</span> <span x-text="plan.today"></span></div>
+              <div class="flex items-baseline justify-between gap-3 mb-1.5">
+                <div class="text-lg font-semibold tracking-tight" x-text="plan.case_number"></div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ring-1"
+                      :class="verdictPillClass(plan.verdict_class)">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="verdictDotClass(plan.verdict_class)"></span>
+                  <span x-text="plan.verdict_class"></span>
+                </span>
               </div>
-              <details class="mt-3 text-xs">
-                <summary class="text-indigo-600 cursor-pointer">show respondents (<span x-text="plan.respondents.length"></span>)</summary>
-                <ol class="mt-2 ml-5 list-decimal text-slate-700 space-y-1">
+              <div class="text-sm text-slate-600" x-text="plan.court"></div>
+              <div class="mt-3 grid grid-cols-2 gap-y-1.5 gap-x-4 text-sm">
+                <div><span class="text-slate-400 inline-block w-24 text-[11px] uppercase tracking-widest">Judgment</span> <span class="font-medium tabular-nums" x-text="plan.judgment_date"></span></div>
+                <div><span class="text-slate-400 inline-block w-24 text-[11px] uppercase tracking-widest">Today</span> <span class="font-medium tabular-nums" x-text="plan.today"></span></div>
+                <div class="col-span-2"><span class="text-slate-400 inline-block w-24 text-[11px] uppercase tracking-widest">Petitioner</span> <span x-text="plan.petitioner"></span></div>
+              </div>
+              <details class="mt-3 text-xs group">
+                <summary class="text-indigo-600 cursor-pointer select-none hover:text-indigo-700">
+                  <span class="group-open:hidden">▸</span><span class="hidden group-open:inline">▾</span>
+                  show respondents (<span x-text="plan.respondents.length"></span>)
+                </summary>
+                <ol class="mt-2 ml-1 space-y-1.5">
                   <template x-for="r in plan.respondents" :key="r.no">
-                    <li><span class="font-mono text-slate-400" x-text="'R' + r.no"></span> · <span x-text="r.designation"></span></li>
+                    <li class="flex gap-2.5 items-start">
+                      <span class="font-mono text-[10px] text-slate-400 mt-0.5 tabular-nums" x-text="'R' + r.no"></span>
+                      <span class="flex-1">
+                        <span class="text-slate-700 text-xs" x-text="r.designation"></span>
+                        <span class="block text-[10px] text-slate-500" x-text="r.organization"></span>
+                      </span>
+                    </li>
                   </template>
                 </ol>
               </details>
             </div>
 
+            <!-- Action plan heading -->
             <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">Action plan</h2>
-              <span class="text-sm text-slate-500">
-                <span x-text="plan.actions.length"></span> item<span x-text="plan.actions.length === 1 ? '' : 's'"></span>
-              </span>
+              <h2 class="text-base font-semibold text-slate-800 tracking-tight">Action plan</h2>
+              <span class="text-xs text-slate-500">Staff assistance · officer decides</span>
             </div>
 
             <template x-if="plan.actions.length === 0">
-              <div class="bg-white border border-dashed rounded-lg p-6 text-sm text-slate-500 text-center">
+              <div class="bg-white border border-dashed border-slate-300 rounded-xl p-6 text-sm text-slate-500 text-center">
                 No actions emitted by the rules engine.
               </div>
             </template>
 
+            <!-- Cards -->
             <template x-for="(a, idx) in plan.actions" :key="idx">
-              <div class="bg-white border rounded-lg shadow-sm">
-                <div class="p-4 border-b">
-                  <div class="flex items-center gap-2 mb-2 flex-wrap">
-                    <span class="text-[10px] font-mono px-2 py-0.5 rounded uppercase tracking-wide"
-                          :class="a.kind === 'DEFENSIVE_MONITOR'
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : a.kind === 'ACTIVE_OBLIGATION'
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : 'bg-slate-100 text-slate-700'"
+              <div class="flex bg-white rounded-xl ring-1 ring-slate-200/70 shadow-sm overflow-hidden">
+
+                <!-- Severity rail -->
+                <div class="w-1 shrink-0" :class="urgencyTier(a.days_from_today, a.deadline).rail"></div>
+
+                <!-- Big day-count block -->
+                <div class="w-24 shrink-0 border-r border-slate-100 flex flex-col items-center justify-center"
+                     :class="urgencyTier(a.days_from_today, a.deadline).block">
+                  <template x-if="a.deadline === null">
+                    <div class="text-base font-semibold italic">OPEN</div>
+                  </template>
+                  <template x-if="a.deadline !== null && a.days_from_today === 0">
+                    <div class="text-lg font-bold tracking-tight">TODAY</div>
+                  </template>
+                  <template x-if="a.deadline !== null && a.days_from_today < 0">
+                    <div class="flex flex-col items-center">
+                      <div class="text-[9px] font-bold tracking-widest mb-0.5">OVERDUE</div>
+                      <div class="text-3xl font-bold tabular-nums leading-none" x-text="-a.days_from_today"></div>
+                      <div class="text-[10px] tracking-widest font-semibold mt-1">DAYS</div>
+                    </div>
+                  </template>
+                  <template x-if="a.deadline !== null && a.days_from_today > 0">
+                    <div class="flex flex-col items-center">
+                      <div class="text-4xl font-bold tabular-nums leading-none" x-text="a.days_from_today"></div>
+                      <div class="text-[10px] tracking-widest font-semibold mt-1">DAYS</div>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Body -->
+                <div class="flex-1 min-w-0 p-4">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded uppercase tracking-widest ring-1"
+                          :class="kindChipClass(a.kind)"
                           x-text="a.kind"></span>
-                    <template x-if="a.deadline">
-                      <span class="text-xs text-slate-600">
-                        deadline <span class="font-medium" x-text="a.deadline"></span>
-                        <span class="text-slate-400" x-text="'(' + (a.days_from_today === 0 ? 'today' : (a.days_from_today < 0 ? 'OVERDUE by ' + (-a.days_from_today) + ' days' : 'in ' + a.days_from_today + ' days')) + ')'"></span>
-                      </span>
+                  </div>
+                  <h3 class="text-base font-semibold leading-snug text-slate-800" x-text="a.title"></h3>
+                  <p class="text-sm text-slate-600 leading-relaxed mt-1" x-text="a.description"></p>
+                  <div class="text-xs text-slate-500 mt-1.5 tabular-nums">
+                    <template x-if="a.deadline !== null">
+                      <span>due <span class="font-medium text-slate-700" x-text="formatDeadline(a.deadline)"></span></span>
                     </template>
-                    <template x-if="!a.deadline">
-                      <span class="text-xs text-slate-400 italic">open-ended</span>
+                    <template x-if="a.deadline === null">
+                      <span class="italic">open-ended — flagged for officer review</span>
                     </template>
                   </div>
-                  <div class="text-sm font-semibold text-slate-800" x-text="a.title"></div>
-                </div>
-                <div class="px-4 py-3 text-xs text-slate-600 space-y-1.5">
-                  <div><span class="text-slate-400 inline-block w-20">Target</span><span x-text="a.target"></span></div>
-                  <div><span class="text-slate-400 inline-block w-20">Rule</span><span class="font-mono" x-text="a.rule_id"></span> <span class="text-slate-400" x-text="'v' + a.rule_version"></span></div>
-                  <div><span class="text-slate-400 inline-block w-20">Statute</span><span x-text="a.statute"></span></div>
-                  <template x-if="a.source_paragraph_index !== null">
-                    <div><span class="text-slate-400 inline-block w-20">Source</span>paragraph <span class="font-mono" x-text="a.source_paragraph_index"></span></div>
+
+                  <div class="border-t border-slate-100 mt-3 pt-3 grid grid-cols-1 gap-y-1.5 text-xs">
+                    <div class="flex gap-3">
+                      <span class="text-[10px] uppercase tracking-widest text-slate-400 w-16 shrink-0 mt-0.5">Target</span>
+                      <span class="text-slate-700" x-text="a.target"></span>
+                    </div>
+                    <div class="flex gap-3">
+                      <span class="text-[10px] uppercase tracking-widest text-slate-400 w-16 shrink-0 mt-0.5">Rule</span>
+                      <span><span class="font-mono text-slate-700" x-text="a.rule_id"></span> <span class="text-slate-400" x-text="'v' + a.rule_version"></span></span>
+                    </div>
+                    <div class="flex gap-3">
+                      <span class="text-[10px] uppercase tracking-widest text-slate-400 w-16 shrink-0 mt-0.5">Statute</span>
+                      <span class="text-slate-700" x-text="a.statute"></span>
+                    </div>
+                  </div>
+
+                  <!-- Source paragraph collapsible -->
+                  <template x-if="a.source_paragraph_index !== null && a.source_text">
+                    <details class="mt-3 group" x-data="{ open: false }">
+                      <summary class="text-xs text-indigo-600 hover:text-indigo-700 cursor-pointer select-none list-none">
+                        <span class="group-open:hidden">▸</span><span class="hidden group-open:inline">▾</span>
+                        Source paragraph <span class="font-mono text-slate-500" x-text="'P' + a.source_paragraph_index"></span>
+                      </summary>
+                      <div class="mt-2">
+                        <blockquote class="border-l-4 border-slate-300 pl-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap"
+                                    x-html="renderSourceParagraph(a.source_text, a.source_voice_spans, a.verbatim_char_span)"></blockquote>
+                        <div class="mt-2 flex flex-wrap gap-2 text-[10px] text-slate-500"
+                             x-html="voiceLegend(a.source_voice_spans, a.verbatim_char_span)"></div>
+                      </div>
+                    </details>
                   </template>
-                </div>
-                <template x-if="a.source_text">
-                  <details class="border-t bg-slate-50 px-4 py-2 text-xs group">
-                    <summary class="text-indigo-600 cursor-pointer select-none">view source paragraph</summary>
-                    <div class="mt-2 p-3 bg-white border rounded text-slate-700 whitespace-pre-wrap leading-relaxed" x-text="a.source_text"></div>
+
+                  <!-- Computation trace collapsible -->
+                  <details class="mt-2 group">
+                    <summary class="text-xs text-indigo-600 hover:text-indigo-700 cursor-pointer select-none list-none">
+                      <span class="group-open:hidden">▸</span><span class="hidden group-open:inline">▾</span>
+                      Computation
+                      <span class="text-[10px] font-mono uppercase tracking-widest text-slate-400 ml-1"
+                            x-text="a.computation_trace.kind === 'directive' ? '· directive' : '· verdict'"></span>
+                    </summary>
+                    <div class="mt-2 font-mono text-[11px] text-slate-700 bg-slate-50 ring-1 ring-slate-200/70 rounded-md p-3 space-y-1 leading-relaxed"
+                         x-html="renderComputation(a.computation_trace)"></div>
                   </details>
-                </template>
+
+                </div>
               </div>
             </template>
 
-            <template x-if="plan.errors && plan.errors.length">
-              <div class="bg-rose-50 border border-rose-200 rounded p-3 text-sm text-rose-800">
-                <div class="font-semibold mb-1">Validation errors — plan would be routed to human review</div>
-                <ul class="list-disc ml-5">
-                  <template x-for="e in plan.errors" :key="e[0] + ':' + e[1]">
-                    <li><span class="font-mono" x-text="e[0]"></span> — <span x-text="e[1]"></span></li>
-                  </template>
-                </ul>
-              </div>
-            </template>
-
-            <div class="text-[11px] text-slate-400 pt-2 border-t">
-              Staff assistance only · LLM never computes deadlines · officer always decides
+            <!-- Footer -->
+            <div class="pt-4 mt-2 border-t border-slate-200/70 flex items-start gap-2 text-[11px] text-slate-500">
+              <svg class="w-3.5 h-3.5 mt-0.5 shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a1 1 0 0 0 0 2v3a1 1 0 0 0 1 1h1a1 1 0 1 0 0-2v-3a1 1 0 0 0-1-1H9Z" clip-rule="evenodd"/></svg>
+              <span>
+                Staff assistance only · LLM never computes deadlines · officer always decides ·
+                <span class="text-slate-400">all deadlines via versioned YAML rules; every directive grounded to a verbatim span in the source.</span>
+              </span>
             </div>
 
           </div>
@@ -160,12 +292,14 @@
         cases: {{ cases | tojson }},
         plan: null,
         currentSlug: null,
+
         async init() {
           if (this.cases.length) {
             this.currentSlug = this.cases[0].slug;
             await this.load(this.currentSlug);
           }
         },
+
         async load(slug) {
           this.currentSlug = slug;
           this.plan = null;
@@ -177,6 +311,7 @@
           }
           this.plan = await r.json();
         },
+
         async renderPdf(slug) {
           const pane = document.getElementById('pdf-pane');
           pane.innerHTML = '<div class="p-4 text-slate-500 text-sm">Loading PDF…</div>';
@@ -199,6 +334,191 @@
           } catch (err) {
             pane.innerHTML = '<div class="p-4 text-rose-600 text-sm">Failed to load PDF: ' + err.message + '</div>';
           }
+        },
+
+        // ---- Stats / derived values ----
+        get stats() {
+          const a = (this.plan && this.plan.actions) || [];
+          return {
+            dueSoon: a.filter(x => x.deadline !== null && x.days_from_today >= 0 && x.days_from_today <= 30).length,
+            overdue: a.filter(x => x.deadline !== null && x.days_from_today < 0).length,
+          };
+        },
+
+        paragraphSummaryTooltip() {
+          if (!this.plan || !this.plan.paragraph_summary) return '';
+          return Object.entries(this.plan.paragraph_summary)
+            .sort((a, b) => b[1] - a[1])
+            .map(([k, v]) => `${k}: ${v}`).join(' · ');
+        },
+
+        // ---- Pill / chip palettes ----
+        verdictPillClass(v) {
+          switch (v) {
+            case 'DISMISSED':
+            case 'DISMISSED_WITH_COSTS':
+              return 'bg-rose-50 text-rose-700 ring-rose-200';
+            case 'ALLOWED':
+            case 'PARTLY_ALLOWED':
+              return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+            case 'DISPOSED_WITH_DIRECTIONS':
+              return 'bg-amber-50 text-amber-800 ring-amber-200';
+            case 'REMANDED':
+              return 'bg-slate-100 text-slate-700 ring-slate-200';
+            default:
+              return 'bg-slate-100 text-slate-700 ring-slate-200';
+          }
+        },
+        verdictDotClass(v) {
+          switch (v) {
+            case 'DISMISSED':
+            case 'DISMISSED_WITH_COSTS': return 'bg-rose-500';
+            case 'ALLOWED':
+            case 'PARTLY_ALLOWED': return 'bg-emerald-500';
+            case 'DISPOSED_WITH_DIRECTIONS': return 'bg-amber-500';
+            case 'REMANDED': return 'bg-slate-400';
+            default: return 'bg-slate-400';
+          }
+        },
+        kindChipClass(k) {
+          switch (k) {
+            case 'DEFENSIVE_MONITOR': return 'bg-amber-50 text-amber-800 ring-amber-200';
+            case 'ACTIVE_OBLIGATION': return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
+            case 'HUMAN_REVIEW':      return 'bg-slate-100 text-slate-700 ring-slate-200';
+            default:                  return 'bg-slate-100 text-slate-700 ring-slate-200';
+          }
+        },
+
+        // ---- Urgency tier ----
+        urgencyTier(days, deadline) {
+          if (deadline === null) return { name: 'open',      rail: 'bg-slate-200', block: 'bg-slate-50 text-slate-500' };
+          if (days < 0)          return { name: 'overdue',   rail: 'bg-rose-500',  block: 'bg-rose-50 text-rose-700' };
+          if (days < 7)          return { name: 'critical',  rail: 'bg-rose-400',  block: 'bg-rose-50 text-rose-600' };
+          if (days < 30)         return { name: 'attention', rail: 'bg-amber-400', block: 'bg-amber-50 text-amber-700' };
+          if (days < 90)         return { name: 'tracking',  rail: 'bg-sky-400',   block: 'bg-sky-50 text-sky-700' };
+          return                       { name: 'normal',    rail: 'bg-slate-300', block: 'bg-slate-50 text-slate-700' };
+        },
+
+        // ---- Date formatting ----
+        formatDeadline(iso) {
+          if (!iso) return '';
+          try {
+            const d = new Date(iso + 'T00:00:00');
+            const wd = d.toLocaleDateString('en-GB', { weekday: 'short' });
+            return wd + ' ' + iso;
+          } catch (e) { return iso; }
+        },
+
+        // ---- Source paragraph rendering with voice + verbatim spans ----
+        renderSourceParagraph(text, voiceSpans, verbatimSpan) {
+          if (!text) return '';
+          const VOICE_BG = {
+            COURT: '',
+            STATUTE_QUOTE: 'bg-amber-50',
+            SUPREME_COURT_QUOTE: 'bg-rose-50',
+            REVISIONAL_AUTHORITY_QUOTE: 'bg-violet-50',
+            OTHER_COURT_QUOTE: 'bg-sky-50',
+            PARTY_CONTENTION: 'bg-slate-100 italic',
+          };
+          const verbatim = Array.isArray(verbatimSpan) && verbatimSpan.length === 2
+            ? verbatimSpan : null;
+
+          const styleAt = (i) => {
+            let voice = 'COURT';
+            if (voiceSpans) {
+              for (const s of voiceSpans) {
+                if (s.start <= i && i < s.end) { voice = s.voice; break; }
+              }
+            }
+            const inVerb = verbatim && verbatim[0] <= i && i < verbatim[1];
+            return [voice, inVerb];
+          };
+
+          const escape = (s) => s
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+          let html = '';
+          let i = 0;
+          while (i < text.length) {
+            const [v, vb] = styleAt(i);
+            let j = i + 1;
+            while (j < text.length) {
+              const [v2, vb2] = styleAt(j);
+              if (v2 !== v || vb2 !== vb) break;
+              j++;
+            }
+            const slice = escape(text.slice(i, j));
+            const classes = [];
+            if (VOICE_BG[v]) classes.push(VOICE_BG[v]);
+            if (vb) classes.push('underline decoration-amber-500 decoration-2 underline-offset-2');
+            if (classes.length) {
+              html += `<span class="${classes.join(' ')}">${slice}</span>`;
+            } else {
+              html += slice;
+            }
+            i = j;
+          }
+          return html;
+        },
+
+        voiceLegend(voiceSpans, verbatimSpan) {
+          const seen = new Set();
+          const items = [];
+          if (voiceSpans) {
+            for (const s of voiceSpans) {
+              if (s.voice === 'COURT' || seen.has(s.voice)) continue;
+              seen.add(s.voice);
+              const swatch = {
+                STATUTE_QUOTE: 'bg-amber-50 ring-amber-200',
+                SUPREME_COURT_QUOTE: 'bg-rose-50 ring-rose-200',
+                REVISIONAL_AUTHORITY_QUOTE: 'bg-violet-50 ring-violet-200',
+                OTHER_COURT_QUOTE: 'bg-sky-50 ring-sky-200',
+                PARTY_CONTENTION: 'bg-slate-100 ring-slate-200',
+              }[s.voice] || 'bg-slate-100 ring-slate-200';
+              items.push(
+                `<span class="inline-flex items-center gap-1"><span class="inline-block w-3 h-3 rounded ${swatch} ring-1"></span>${s.voice}</span>`
+              );
+            }
+          }
+          if (Array.isArray(verbatimSpan) && verbatimSpan.length === 2) {
+            items.push('<span class="inline-flex items-center gap-1"><span class="inline-block w-3 h-0.5 bg-amber-500"></span>verbatim directive span</span>');
+          }
+          return items.join(' · ');
+        },
+
+        // ---- Computation trace rendering ----
+        renderComputation(t) {
+          if (!t) return '';
+          const escape = (s) => String(s || '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const row = (label, value, mono = false) =>
+            `<div class="grid grid-cols-[80px_1fr] gap-3"><span class="text-[10px] uppercase tracking-widest text-slate-400">${label}</span><span class="${mono ? '' : 'font-sans'}">${escape(value)}</span></div>`;
+
+          if (t.kind === 'directive') {
+            const lines = [];
+            if (t.open_ended) {
+              lines.push(row('directive', '"' + (t.verbatim_text || '').slice(0, 80) + (t.verbatim_text && t.verbatim_text.length > 80 ? '…' : '') + '"'));
+              lines.push(row('time', 'open-ended'));
+              lines.push(row('math', 'flagged for officer review'));
+            } else {
+              lines.push(row('directive', '"' + t.time_clause.raw + '"'));
+              lines.push(row('unit', t.time_clause.unit));
+              lines.push(row('quantity', t.time_clause.quantity));
+              lines.push(row('math', t.computation));
+            }
+            lines.push(row('rule', t.rule_id + ' v' + t.rule_version));
+            lines.push(row('statute', t.statute));
+            return lines.join('');
+          }
+
+          // verdict-driven
+          const lines = [];
+          lines.push(row('verdict', t.verdict_class));
+          lines.push(row('rule', t.rule_id + ' v' + t.rule_version));
+          lines.push(row('math', t.computation));
+          lines.push(row('statute', t.statute));
+          return lines.join('');
         },
       };
     }

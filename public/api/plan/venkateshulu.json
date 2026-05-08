@@ -37,7 +37,7 @@
   ],
   "verdict_class": "DISMISSED",
   "engine_version": "0.3.0",
-  "today": "2026-05-07",
+  "today": "2026-05-08",
   "paragraph_total": 24,
   "paragraph_summary": {
     "FACTS": 12,
@@ -52,7 +52,7 @@
       "title": "Monitor SLP window",
       "description": "Petitioner has 90 days from 2026-04-17 to file a Special Leave Petition under Article 136 of the Constitution. Respondent should be prepared to defend if filed.",
       "deadline": "2026-07-16",
-      "days_from_today": 70,
+      "days_from_today": 69,
       "target": "R3: Principal Secretary to Government, Commerce and Industries Department (MSME and Mines)",
       "rule_id": "dismissed_slp_window",
       "rule_version": "0.3.0",

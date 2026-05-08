@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 from collections import Counter
-from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +16,7 @@ from kartavya.cli.run import (
     _resolve_target,
     _stubbed_clients,
 )
+from kartavya.clock import today_ist
 from kartavya.extraction.directives import extract_directives
 from kartavya.extraction.section import classify_paragraphs
 from kartavya.extraction.voice import annotate_paragraphs
@@ -56,14 +56,12 @@ CASES: dict[str, dict[str, Any]] = {
         "label": "WP 13296/2022 — Sri V. Venkateshulu (DISMISSED)",
         "pdf": _REPO
         / "tests/fixtures/venkateshulu_real_pdf_wp13296_2022/original.pdf",
-        "today": date(2026, 5, 7),
         "demo_positive": False,
     },
     "synthetic-positive": {
         "label": "WP 8472/2025 — Synthetic (DISPOSED WITH DIRECTIONS)",
         "pdf": _REPO
         / "tests/fixtures/synthetic_disposed_with_directions/judgment.pdf",
-        "today": date(2026, 3, 15),
         "demo_positive": True,
     },
 }
@@ -85,6 +83,7 @@ def _build_plan(case_slug: str) -> dict[str, Any]:
     if case_slug in _PLAN_CACHE:
         return _PLAN_CACHE[case_slug]
     cfg = CASES[case_slug]
+    today = today_ist()
 
     section_llm, directive_llm = _stubbed_clients()
     md = parse_cause_title(cfg["pdf"])
@@ -108,13 +107,13 @@ def _build_plan(case_slug: str) -> dict[str, Any]:
     )
     directives = extract_directives(case_no_directives, llm_client=directive_llm)
     case = case_no_directives.model_copy(update={"directives": directives})
-    plan = generate_actions(case, today=cfg["today"])
+    plan = generate_actions(case, today=today)
     errors = validate_action_plan(plan, case)
 
     actions_view = []
     for a in plan.actions:
         target = _resolve_target(a.target_role_id, case)
-        delta = (a.deadline - cfg["today"]).days if a.deadline else None
+        delta = (a.deadline - today).days if a.deadline else None
         source_text = None
         source_voice_spans: list[dict[str, Any]] = []
         if a.source_paragraph_index is not None:
@@ -234,7 +233,7 @@ def _build_plan(case_slug: str) -> dict[str, Any]:
         ],
         "verdict_class": case.verdict_class,
         "engine_version": plan.rule_engine_version,
-        "today": cfg["today"].isoformat(),
+        "today": today.isoformat(),
         "paragraph_total": len(case.paragraphs),
         "paragraph_summary": paragraph_summary,
         "actions": actions_view,

@@ -18,7 +18,7 @@ Flags:
                  other tools or for the demo's "see the structured
                  output" beat).
     --today      Override "today" for risk-tier and overdue calculations
-                 (default: system date). Required for reproducible
+                 (default: today in IST). Required for reproducible
                  demos against fixed-date fixtures.
 
 For the positive case (synthetic disposed-with-directions judgment),
@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
+from kartavya.clock import today_ist
 from kartavya.extraction.directives import extract_directives
 from kartavya.extraction.section import classify_paragraphs
 from kartavya.extraction.voice import annotate_paragraphs
@@ -264,8 +265,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--today",
         type=date.fromisoformat,
-        default=date.today(),
-        help="Override today for deadline math (ISO format YYYY-MM-DD)",
+        default=today_ist(),
+        help="Override today for deadline math (default: today in IST; ISO format YYYY-MM-DD)",
     )
     args = parser.parse_args(argv)
 

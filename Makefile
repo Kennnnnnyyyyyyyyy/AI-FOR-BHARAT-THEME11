@@ -54,12 +54,12 @@ clean:
 demo-venkateshulu:
 	.venv/bin/python -m kartavya.cli.run \
 	    tests/fixtures/venkateshulu_real_pdf_wp13296_2022/original.pdf \
-	    --dry-run --today 2026-05-07
+	    --dry-run
 
 demo-positive:
 	.venv/bin/python -m kartavya.cli.run \
 	    tests/fixtures/synthetic_disposed_with_directions/judgment.pdf \
-	    --dry-run --demo-positive --today 2026-03-15
+	    --dry-run --demo-positive
 
 build-demo:
 	.venv/bin/python scripts/build_demo.py

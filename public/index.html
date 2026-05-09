@@ -158,7 +158,7 @@
               <div class="text-sm text-slate-600" x-text="plan.court"></div>
               <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-y-1.5 gap-x-4 text-sm">
                 <div><span class="text-slate-400 inline-block w-24 text-[11px] uppercase tracking-widest">Judgment</span> <span class="font-medium tabular-nums" x-text="plan.judgment_date"></span></div>
-                <div><span class="text-slate-400 inline-block w-24 text-[11px] uppercase tracking-widest">Today</span> <span class="font-medium tabular-nums" x-text="plan.today"></span></div>
+                <div><span class="text-slate-400 inline-block w-24 text-[11px] uppercase tracking-widest">Today</span> <span class="font-medium tabular-nums" x-text="todayIST()"></span></div>
                 <div class="col-span-2"><span class="text-slate-400 inline-block w-24 text-[11px] uppercase tracking-widest">Petitioner</span> <span x-text="plan.petitioner"></span></div>
               </div>
               <details class="mt-3 text-xs group">
@@ -197,27 +197,27 @@
               <div class="flex bg-white rounded-xl ring-1 ring-slate-200/70 shadow-sm overflow-hidden">
 
                 <!-- Severity rail -->
-                <div class="w-1 shrink-0" :class="urgencyTier(a.days_from_today, a.deadline).rail"></div>
+                <div class="w-1 shrink-0" :class="urgencyTier(daysFromToday(a.deadline), a.deadline).rail"></div>
 
                 <!-- Big day-count block -->
                 <div class="w-20 sm:w-24 shrink-0 border-r border-slate-100 flex flex-col items-center justify-center px-1"
-                     :class="urgencyTier(a.days_from_today, a.deadline).block">
+                     :class="urgencyTier(daysFromToday(a.deadline), a.deadline).block">
                   <template x-if="a.deadline === null">
                     <div class="text-sm sm:text-base font-semibold italic">OPEN</div>
                   </template>
-                  <template x-if="a.deadline !== null && a.days_from_today === 0">
+                  <template x-if="a.deadline !== null && daysFromToday(a.deadline) === 0">
                     <div class="text-base sm:text-lg font-bold tracking-tight">TODAY</div>
                   </template>
-                  <template x-if="a.deadline !== null && a.days_from_today < 0">
+                  <template x-if="a.deadline !== null && daysFromToday(a.deadline) < 0">
                     <div class="flex flex-col items-center">
                       <div class="text-[9px] font-bold tracking-widest mb-0.5">OVERDUE</div>
-                      <div class="text-2xl sm:text-3xl font-bold tabular-nums leading-none" x-text="-a.days_from_today"></div>
+                      <div class="text-2xl sm:text-3xl font-bold tabular-nums leading-none" x-text="-daysFromToday(a.deadline)"></div>
                       <div class="text-[10px] tracking-widest font-semibold mt-1">DAYS</div>
                     </div>
                   </template>
-                  <template x-if="a.deadline !== null && a.days_from_today > 0">
+                  <template x-if="a.deadline !== null && daysFromToday(a.deadline) > 0">
                     <div class="flex flex-col items-center">
-                      <div class="text-3xl sm:text-4xl font-bold tabular-nums leading-none" x-text="a.days_from_today"></div>
+                      <div class="text-3xl sm:text-4xl font-bold tabular-nums leading-none" x-text="daysFromToday(a.deadline)"></div>
                       <div class="text-[10px] tracking-widest font-semibold mt-1">DAYS</div>
                     </div>
                   </template>
@@ -358,8 +358,8 @@
         get stats() {
           const a = (this.plan && this.plan.actions) || [];
           return {
-            dueSoon: a.filter(x => x.deadline !== null && x.days_from_today >= 0 && x.days_from_today <= 30).length,
-            overdue: a.filter(x => x.deadline !== null && x.days_from_today < 0).length,
+            dueSoon: a.filter(x => x.deadline !== null && this.daysFromToday(x.deadline) >= 0 && this.daysFromToday(x.deadline) <= 30).length,
+            overdue: a.filter(x => x.deadline !== null && this.daysFromToday(x.deadline) < 0).length,
           };
         },
 
@@ -415,6 +415,19 @@
           if (days < 30)         return { name: 'attention', rail: 'bg-amber-400', block: 'bg-amber-50 text-amber-700' };
           if (days < 90)         return { name: 'tracking',  rail: 'bg-sky-400',   block: 'bg-sky-50 text-sky-700' };
           return                       { name: 'normal',    rail: 'bg-slate-300', block: 'bg-slate-50 text-slate-700' };
+        },
+
+        // ---- IST clock + relative day-count (deployed site is static JSON;
+        //      compute today and days-to-deadline in the browser so the
+        //      day-count is always correct without rebuilding/redeploying) ----
+        todayIST() {
+          return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+        },
+        daysFromToday(deadlineIso) {
+          if (!deadlineIso) return null;
+          const a = new Date(this.todayIST() + 'T00:00:00Z');
+          const b = new Date(deadlineIso + 'T00:00:00Z');
+          return Math.round((b - a) / 86400000);
         },
 
         // ---- Date formatting ----
